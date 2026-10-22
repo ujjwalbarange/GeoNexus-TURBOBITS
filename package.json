@@ -13,7 +13,6 @@
     "@auth/core": "^0.41.3",
     "assemblyai": "^4.36.7",
     "groq-sdk": "^1.5.0",
-    "h3-js": "^4.5.0",
     "leaflet": "^1.9.4",
     "maplibre-gl": "^6.3.0",
     "mysql2": "^3.23.3",
