@@ -20,6 +20,7 @@ import {
 } from "@/components/admin/osm-map-types";
 import { useCityContext } from "@/components/providers/city-provider";
 import { WardActionHubModal } from "@/components/admin/ward-action-hub-modal";
+import { EmergencyDispatchModal } from "@/components/admin/emergency-dispatch-modal";
 
 // Dynamic import with SSR disabled to prevent Leaflet window errors
 const OsmIncidentMap = dynamic(
@@ -31,6 +32,21 @@ const OsmIncidentMap = dynamic(
         <div className="w-10 h-10 border-3 border-accent border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-sm font-bold text-text-primary">Loading Sentinel Command Map...</p>
         <p className="text-xs text-text-tertiary">Connecting live telemetry and spatial layers</p>
+      </div>
+    ),
+  }
+);
+
+// Dynamic import for 3D MapLibre GL WebGL Terrain Engine
+const MapLibre3DHazardView = dynamic(
+  () => import("@/components/maps/maplibre-3d-hazard-view"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full flex flex-col items-center justify-center bg-slate-950 text-white">
+        <div className="w-10 h-10 border-3 border-amber-500 border-t-transparent rounded-full animate-spin mb-3" />
+        <p className="text-sm font-bold">Initializing 3D Terrain & Extrusions...</p>
+        <p className="text-xs text-slate-400">Loading MapLibre GL WebGL Engine</p>
       </div>
     ),
   }
@@ -103,6 +119,18 @@ export default function AdminMapPage() {
   const [showWaterways, setShowWaterways] = useState(false);
   const [showHospitals, setShowHospitals] = useState(false);
   const [showHazardMenu, setShowHazardMenu] = useState(false);
+
+  // Sentinel Wildfire & Thermal Intelligence Extension State
+  const [hazardMode, setHazardMode] = useState<"ALL" | "FLOOD" | "FIRE">("ALL");
+  const [viewMode, setViewMode] = useState<"2D" | "3D">("2D");
+  const [wildfireData, setWildfireData] = useState<any>(null);
+  const [showFireDetections, setShowFireDetections] = useState(true);
+  const [showFireRiskHeatmap, setShowFireRiskHeatmap] = useState(true);
+  const [showFireStations, setShowFireStations] = useState(true);
+  const [showFireSpreadVector, setShowFireSpreadVector] = useState(true);
+  const [fireRiskOpacity, setFireRiskOpacity] = useState(0.65);
+  const [dispatchModalOpen, setDispatchModalOpen] = useState(false);
+  const [selectedFireObservation, setSelectedFireObservation] = useState<any | null>(null);
 
   // Navigation triggers (Fit City & Reset View)
   const [fitCityTrigger, setFitCityTrigger] = useState(0);
@@ -181,6 +209,22 @@ export default function AdminMapPage() {
       }
     }
     loadHazards();
+  }, [city]);
+
+  /* Load Wildfire & Thermal Intelligence Feed */
+  useEffect(() => {
+    async function loadWildfire() {
+      try {
+        const res = await fetch(`/api/hazards/wildfire?city=${city}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success) setWildfireData(json.data);
+        }
+      } catch (err) {
+        console.warn("[AdminMap] Wildfire feed non-fatal error:", err);
+      }
+    }
+    loadWildfire();
   }, [city]);
 
   useEffect(() => {
@@ -332,8 +376,23 @@ export default function AdminMapPage() {
     if (showCoastalExposure) count++;
     if (showWaterways) count++;
     if (showHospitals) count++;
+    if (showFireDetections) count++;
+    if (showFireRiskHeatmap) count++;
+    if (showFireStations) count++;
+    if (showFireSpreadVector) count++;
     return count;
-  }, [showFloodHotspots, showTerrainSinks, showDrainageNetwork, showCoastalExposure, showWaterways, showHospitals]);
+  }, [
+    showFloodHotspots,
+    showTerrainSinks,
+    showDrainageNetwork,
+    showCoastalExposure,
+    showWaterways,
+    showHospitals,
+    showFireDetections,
+    showFireRiskHeatmap,
+    showFireStations,
+    showFireSpreadVector,
+  ]);
 
   const weather = hazardFeed?.currentTelemetry?.weather;
   const aqi = hazardFeed?.currentTelemetry?.airQuality;
@@ -415,8 +474,76 @@ export default function AdminMapPage() {
           </select>
         </div>
 
-        {/* Right: Tile Switcher & Action Controls */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Right: Mode Switchers, Tile Switcher & Action Controls */}
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          {/* Hazard Mode Selector */}
+          <div className="flex items-center gap-0.5 bg-surface-1 border border-border p-1 rounded-xl">
+            <button
+              onClick={() => setHazardMode("ALL")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                hazardMode === "ALL"
+                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-xs"
+                  : "text-text-tertiary hover:text-text-primary"
+              }`}
+              title="Unified Multi-Hazard Mode"
+            >
+              <span>⚡</span>
+              <span className="hidden xl:inline">Combined</span>
+            </button>
+            <button
+              onClick={() => setHazardMode("FLOOD")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                hazardMode === "FLOOD"
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : "text-text-tertiary hover:text-text-primary"
+              }`}
+              title="Urban Flood Intelligence"
+            >
+              <span>🌊</span>
+              <span className="hidden xl:inline">Flood</span>
+            </button>
+            <button
+              onClick={() => setHazardMode("FIRE")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                hazardMode === "FIRE"
+                  ? "bg-rose-600 text-white shadow-xs"
+                  : "text-text-tertiary hover:text-text-primary"
+              }`}
+              title="Wildfire & Thermal Intelligence"
+            >
+              <span>🔥</span>
+              <span className="hidden xl:inline">Wildfire</span>
+            </button>
+          </div>
+
+          {/* 2D / 3D Canvas Switcher */}
+          <div className="flex items-center gap-0.5 bg-surface-1 border border-border p-1 rounded-xl">
+            <button
+              onClick={() => setViewMode("2D")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                viewMode === "2D"
+                  ? "bg-accent text-white shadow-xs"
+                  : "text-text-tertiary hover:text-text-primary"
+              }`}
+              title="2D OpenStreetMap Canvas (Leaflet)"
+            >
+              <span>🗺️</span>
+              <span>2D</span>
+            </button>
+            <button
+              onClick={() => setViewMode("3D")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                viewMode === "3D"
+                  ? "bg-amber-600 text-white shadow-xs"
+                  : "text-text-tertiary hover:text-text-primary"
+              }`}
+              title="3D Terrain Perspective Canvas (MapLibre GL 55° Pitch with Extruded Hexagons)"
+            >
+              <span>⛰️</span>
+              <span>3D</span>
+            </button>
+          </div>
+
           {/* Tile Selector */}
           <div className="flex items-center gap-1 bg-surface-1 border border-border p-1 rounded-xl">
             {TILE_PROVIDERS.map((provider) => (
@@ -513,13 +640,33 @@ export default function AdminMapPage() {
           )}
 
           <div className="flex items-center gap-1.5 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700/60 font-mono">
-            <span>🛡️ Risk Score:</span>
+            <span>🛡️ Flood Risk:</span>
             <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${
               (assessment?.riskScore || 20) >= 75 ? "bg-rose-600 text-white" : (assessment?.riskScore || 20) >= 60 ? "bg-amber-600 text-white" : "bg-emerald-600 text-white"
             }`}>
               {assessment ? `${assessment.riskScore}/100 (${assessment.riskLevel})` : "20/100 (LOW)"}
             </span>
           </div>
+
+          {(hazardMode === "ALL" || hazardMode === "FIRE") && (
+            <>
+              <div className="flex items-center gap-1.5 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700/60 font-mono">
+                <span>🔥 Fire Hotspots:</span>
+                <span className="font-bold text-rose-400">
+                  {wildfireData?.activeDetections?.count ?? 0}
+                </span>
+                <span className="text-[10px] text-slate-400">VIIRS/MODIS</span>
+              </div>
+
+              <div className="flex items-center gap-1.5 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700/60 font-mono">
+                <span>💨 Wind:</span>
+                <span className="font-bold text-amber-300">
+                  {wildfireData?.weather?.windSpeedKmh ?? 15} km/h
+                </span>
+                <span className="text-slate-400">({wildfireData?.weather?.windDirectionDegrees ?? 240}°)</span>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
@@ -552,35 +699,71 @@ export default function AdminMapPage() {
 
       {/* ─── Map Container Area ─── */}
       <div className="relative flex-1 w-full h-full overflow-hidden">
-        <OsmIncidentMap
-          key={city}
-          tileUrl={selectedProvider.url}
-          attribution={selectedProvider.attribution}
-          incidents={incidents}
-          facilities={facilities}
-          zones={zones}
-          showIncidents={showIncidents}
-          showFacilities={showFacilities}
-          showZones={showZones}
-          severityFilter={severityFilter}
-          statusFilter={statusFilter}
-          departmentFilter={departmentFilter}
-          selectedCoordinates={selectedCoords}
-          center={cityConfig.center}
-          bounds={cityConfig.bounds}
-          zoom={cityConfig.zoom}
-          cityName={cityConfig.name}
-          hazardLayers={hazardLayers}
-          showFloodHotspots={showFloodHotspots}
-          showTerrainSinks={showTerrainSinks}
-          showDrainageNetwork={showDrainageNetwork}
-          showCoastalExposure={showCoastalExposure}
-          showWaterways={showWaterways}
-          showHospitals={showHospitals}
-          activeAlerts={activeAlerts}
-          fitCityTrigger={fitCityTrigger}
-          resetViewTrigger={resetViewTrigger}
-        />
+        {viewMode === "2D" ? (
+          <OsmIncidentMap
+            key={city}
+            tileUrl={selectedProvider.url}
+            attribution={selectedProvider.attribution}
+            incidents={incidents}
+            facilities={facilities}
+            zones={zones}
+            showIncidents={showIncidents}
+            showFacilities={showFacilities}
+            showZones={showZones}
+            severityFilter={severityFilter}
+            statusFilter={statusFilter}
+            departmentFilter={departmentFilter}
+            selectedCoordinates={selectedCoords}
+            center={cityConfig.center}
+            bounds={cityConfig.bounds}
+            zoom={cityConfig.zoom}
+            cityName={cityConfig.name}
+            hazardLayers={hazardLayers}
+            showFloodHotspots={showFloodHotspots}
+            showTerrainSinks={showTerrainSinks}
+            showDrainageNetwork={showDrainageNetwork}
+            showCoastalExposure={showCoastalExposure}
+            showWaterways={showWaterways}
+            showHospitals={showHospitals}
+            activeAlerts={activeAlerts}
+            fitCityTrigger={fitCityTrigger}
+            resetViewTrigger={resetViewTrigger}
+            hazardMode={hazardMode}
+            showFireDetections={showFireDetections}
+            showFireRiskHeatmap={showFireRiskHeatmap}
+            showFireStations={showFireStations}
+            showFireSpreadVector={showFireSpreadVector}
+            fireRiskOpacity={fireRiskOpacity}
+            fireObservations={wildfireData?.activeDetections?.observations || []}
+            fireRiskGeoJSON={wildfireData?.preFireRisk?.riskGeoJSON}
+            fireSpreadVectors={wildfireData?.fireSpreadEstimations || []}
+            emergencyStations={wildfireData?.emergencyStations?.stations || []}
+            onProposeDispatch={(obs) => {
+              setSelectedFireObservation(obs);
+              setDispatchModalOpen(true);
+            }}
+          />
+        ) : (
+          <MapLibre3DHazardView
+            key={`3d-${city}`}
+            center={selectedCoords || cityConfig.center}
+            zoom={cityConfig.zoom}
+            cityName={cityConfig.name}
+            hazardMode={hazardMode}
+            showFireDetections={showFireDetections}
+            showFireRiskHeatmap={showFireRiskHeatmap}
+            showFireStations={showFireStations}
+            showFireSpreadVector={showFireSpreadVector}
+            fireObservations={wildfireData?.activeDetections?.observations || []}
+            fireRiskGeoJSON={wildfireData?.preFireRisk?.riskGeoJSON}
+            fireSpreadVectors={wildfireData?.fireSpreadEstimations || []}
+            emergencyStations={wildfireData?.emergencyStations?.stations || []}
+            onProposeDispatch={(obs) => {
+              setSelectedFireObservation(obs);
+              setDispatchModalOpen(true);
+            }}
+          />
+        )}
 
         {/* ─── Streamlined GIS Control Toolbar ─── */}
         <div className="absolute top-3 left-3 z-10 flex flex-col items-start gap-2 pointer-events-auto">
@@ -835,6 +1018,91 @@ export default function AdminMapPage() {
                       </label>
                     )}
                   </>
+                )}
+
+                {/* ─── Wildfire & Thermal Intelligence Layers ─── */}
+                {(hazardMode === "ALL" || hazardMode === "FIRE") && (
+                  <div className="pt-2 mt-1 border-t border-border space-y-1">
+                    <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block px-1">
+                      🔥 Wildfire & Thermal GIS Layers
+                    </span>
+
+                    <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-surface-1 cursor-pointer">
+                      <span className="flex items-center gap-2">
+                        <span>🔥</span>
+                        <span className="font-medium text-text-primary">
+                          Thermal Hotspots ({wildfireData?.activeDetections?.count ?? 0})
+                        </span>
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={showFireDetections}
+                        onChange={(e) => setShowFireDetections(e.target.checked)}
+                        className="rounded border-border text-accent focus:ring-accent"
+                      />
+                    </label>
+
+                    <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-surface-1 cursor-pointer">
+                      <span className="flex items-center gap-2">
+                        <span>🌡️</span>
+                        <span className="font-medium text-text-primary">Pre-Fire Risk Grid (H3)</span>
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={showFireRiskHeatmap}
+                        onChange={(e) => setShowFireRiskHeatmap(e.target.checked)}
+                        className="rounded border-border text-accent focus:ring-accent"
+                      />
+                    </label>
+
+                    {showFireRiskHeatmap && (
+                      <div className="px-2 py-1.5 bg-surface-1 rounded-xl border border-border space-y-1">
+                        <div className="flex justify-between text-[10px] text-text-secondary">
+                          <span>Hex Heatmap Opacity</span>
+                          <span className="font-mono font-bold text-accent">
+                            {Math.round(fireRiskOpacity * 100)}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.1"
+                          max="0.9"
+                          step="0.05"
+                          value={fireRiskOpacity}
+                          onChange={(e) => setFireRiskOpacity(parseFloat(e.target.value))}
+                          className="w-full accent-accent h-1.5 cursor-pointer"
+                        />
+                      </div>
+                    )}
+
+                    <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-surface-1 cursor-pointer">
+                      <span className="flex items-center gap-2">
+                        <span>🚒</span>
+                        <span className="font-medium text-text-primary">
+                          Fire & Forest Stations ({wildfireData?.emergencyStations?.count ?? 0})
+                        </span>
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={showFireStations}
+                        onChange={(e) => setShowFireStations(e.target.checked)}
+                        className="rounded border-border text-accent focus:ring-accent"
+                      />
+                    </label>
+
+                    <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-surface-1 cursor-pointer">
+                      <span className="flex items-center gap-2">
+                        <span>↗</span>
+                        <span className="font-medium text-text-primary">Fire Spread Vectors</span>
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={showFireSpreadVector}
+                        onChange={(e) => setShowFireSpreadVector(e.target.checked)}
+                        className="rounded border-border text-accent focus:ring-accent"
+                      />
+                    </label>
+                  </div>
                 )}
               </div>
             </div>
@@ -1294,6 +1562,21 @@ export default function AdminMapPage() {
           sourceName: "Open-Meteo GFS / ECMWF",
         }}
         chronicHotspots={actionHubWard.hotspots}
+      />
+
+      {/* ─── Modal 4: Wildfire Emergency Station Dispatch Proposal ─── */}
+      <EmergencyDispatchModal
+        isOpen={dispatchModalOpen}
+        onClose={() => {
+          setDispatchModalOpen(false);
+          setSelectedFireObservation(null);
+        }}
+        city={city}
+        observation={selectedFireObservation}
+        onDispatchSuccess={(record) => {
+          setActionSuccessMsg(`Dispatch preview ${record.dispatchReference} authorized for simulated response`);
+          setTimeout(() => setActionSuccessMsg(null), 4500);
+        }}
       />
     </div>
   );

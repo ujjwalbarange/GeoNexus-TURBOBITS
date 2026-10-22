@@ -75,6 +75,83 @@ const DEPT_ICONS: Record<string, { icon: string; color: string; label: string }>
   municipal_corp:    { icon: "🏛️", color: "#6366f1", label: "Zonal / Ward Office" },
 };
 
+/* ─── Wildfire & Thermal Custom Icons ─── */
+const FIRE_HOTSPOT_ICON = L.divIcon({
+  className: "custom-fire-marker",
+  html: `
+    <div style="position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
+      <div style="
+        position: absolute;
+        inset: -4px;
+        border-radius: 9999px;
+        background: rgba(239, 68, 68, 0.45);
+        animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+      "></div>
+      <div style="
+        width: 30px;
+        height: 30px;
+        border-radius: 9999px;
+        background: radial-gradient(circle, #f97316 0%, #dc2626 100%);
+        border: 2px solid #ffffff;
+        box-shadow: 0 0 14px rgba(239, 68, 68, 0.8), 0 2px 6px rgba(0,0,0,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        cursor: pointer;
+      ">🔥</div>
+    </div>
+  `,
+  iconSize: [34, 34],
+  iconAnchor: [17, 17],
+  popupAnchor: [0, -18],
+});
+
+const FIRE_STATION_ICON = L.divIcon({
+  className: "custom-fire-station-marker",
+  html: `
+    <div style="
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 2px solid #dc2626;
+      box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+    ">🚒</div>
+  `,
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
+  popupAnchor: [0, -14],
+});
+
+const FOREST_STATION_ICON = L.divIcon({
+  className: "custom-forest-station-marker",
+  html: `
+    <div style="
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 2px solid #15803d;
+      box-shadow: 0 2px 8px rgba(21, 128, 61, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+    ">🌲</div>
+  `,
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
+  popupAnchor: [0, -14],
+});
+
+
 /* ─── Fast Ray-Casting Point-in-Polygon Test ─── */
 function isPointInPolygon(point: [number, number], vs: [number, number][]): boolean {
   const [x, y] = point; // [lat, lng]
@@ -352,6 +429,19 @@ export default function OsmIncidentMap({
   activeAlerts = [],
   fitCityTrigger = 0,
   resetViewTrigger = 0,
+  hazardMode = "ALL",
+  showFireDetections = true,
+  showFireRiskHeatmap = true,
+  showFireStations = true,
+  showFireSpreadVector = true,
+  fireRiskOpacity = 0.55,
+  fireObservations = [],
+  fireRiskGeoJSON = null,
+  fireSpreadVectors = [],
+  emergencyStations = [],
+  onSelectFireObservation,
+  onSelectH3Cell,
+  onProposeDispatch,
 }: OsmIncidentMapProps & {
   fitCityTrigger?: number;
   resetViewTrigger?: number;
@@ -833,6 +923,248 @@ export default function OsmIncidentMap({
           </Marker>
         );
       })}
+
+      {/* ─── Wildfire & Thermal Intelligence Layers ─── */}
+      {/* A. Pre-Fire Risk Continuous H3 Hexagonal Grid */}
+      {(hazardMode === "ALL" || hazardMode === "FIRE") && showFireRiskHeatmap && fireRiskGeoJSON?.features?.map((feat: any, idx: number) => {
+        const geom = feat.geometry;
+        if (!geom || geom.type !== "Polygon" || !geom.coordinates || geom.coordinates.length === 0) return null;
+        const latLngs = geom.coordinates[0].map(([lon, lat]: [number, number]) => [lat, lon] as [number, number]);
+        const p = feat.properties || {};
+        const cellColor = p.color || "#eab308";
+
+        return (
+          <Polygon
+            key={`h3-risk-${p.h3Index || idx}`}
+            positions={latLngs}
+            eventHandlers={{
+              click: (e) => {
+                L.DomEvent.stopPropagation(e);
+                onSelectH3Cell?.(p);
+              },
+            }}
+            pathOptions={{
+              color: cellColor,
+              weight: 1,
+              fillColor: cellColor,
+              fillOpacity: fireRiskOpacity,
+              opacity: 0.65,
+            }}
+          >
+            <Tooltip sticky>
+              <div className="text-xs p-1 font-sans">
+                <p className="font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>🔥 Risk Score:</span>
+                  <span className="font-mono px-1.5 py-0.2 rounded text-white" style={{ background: cellColor }}>
+                    {p.riskScore}/100 ({p.displayLabel || p.riskLevel})
+                  </span>
+                </p>
+                <p className="text-[10px] text-slate-600 mt-0.5">
+                  H3 Cell: <span className="font-mono">{p.h3Index}</span>
+                </p>
+                <div className="text-[10px] text-slate-500 mt-1 border-t border-slate-200 pt-0.5 flex gap-2">
+                  <span>🌡️ {p.temp}°C</span>
+                  <span>💧 {p.rh}% RH</span>
+                  <span>💨 {p.windKmh} km/h</span>
+                </div>
+              </div>
+            </Tooltip>
+
+            <Popup autoPan keepInView minWidth={240}>
+              <div className="p-2 font-sans text-xs">
+                <div className="flex items-center justify-between pb-1 mb-1.5 border-b border-slate-200">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">H3 Pre-Fire Risk Cell</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded text-white font-bold" style={{ background: cellColor }}>
+                    {p.riskScore} • {p.displayLabel}
+                  </span>
+                </div>
+                <div className="space-y-1 mb-2 bg-slate-50 p-1.5 rounded border border-slate-200">
+                  <p className="flex justify-between text-[11px]">
+                    <span className="text-slate-500">Surface Temp:</span>
+                    <span className="font-semibold">{p.temp}°C</span>
+                  </p>
+                  <p className="flex justify-between text-[11px]">
+                    <span className="text-slate-500">Relative Humidity:</span>
+                    <span className="font-semibold">{p.rh}%</span>
+                  </p>
+                  <p className="flex justify-between text-[11px]">
+                    <span className="text-slate-500">Surface Wind:</span>
+                    <span className="font-semibold">{p.windKmh} km/h</span>
+                  </p>
+                  <p className="flex justify-between text-[11px]">
+                    <span className="text-slate-500">Dry-Spell Days:</span>
+                    <span className="font-semibold">{p.drySpellDays ?? 12} days</span>
+                  </p>
+                  {p.slopeDeg && (
+                    <p className="flex justify-between text-[11px]">
+                      <span className="text-slate-500">Terrain Slope:</span>
+                      <span className="font-semibold">{p.slopeDeg}° incline</span>
+                    </p>
+                  )}
+                </div>
+                <p className="text-[9px] text-slate-400 italic mb-2">
+                  Experimental indicative screening index. Does not represent confirmed combustion.
+                </p>
+              </div>
+            </Popup>
+          </Polygon>
+        );
+      })}
+
+      {/* B. Directional Fire Spread Vectors & Cones */}
+      {(hazardMode === "ALL" || hazardMode === "FIRE") && showFireSpreadVector && fireSpreadVectors?.map((vec: any, idx: number) => {
+        if (!vec || !vec.originLat || !vec.originLon) return null;
+        // Calculate endpoint for spread vector arrow (approx 2.5km length)
+        const rad = (vec.predictedSpreadDirectionDeg * Math.PI) / 180;
+        const lengthKm = 2.5;
+        const endLat = vec.originLat + (lengthKm / 111.0) * Math.cos(rad);
+        const endLon = vec.originLon + (lengthKm / (111.0 * Math.cos((vec.originLat * Math.PI) / 180))) * Math.sin(rad);
+
+        return (
+          <React.Fragment key={`spread-vec-${idx}`}>
+            <Polyline
+              positions={[[vec.originLat, vec.originLon], [endLat, endLon]]}
+              pathOptions={{ color: "#ea580c", weight: 3, dashArray: "5, 5", opacity: 0.9 }}
+            >
+              <Tooltip sticky>
+                <div className="text-xs p-1">
+                  <p className="font-bold text-orange-700">↗ Fire Spread Vector (Kinematic Estimate)</p>
+                  <p className="text-[10px] text-slate-600">Heading: {vec.predictedSpreadDirectionDeg}° • Est: ~{vec.predictedSpreadSpeedKmh} km/h</p>
+                  <p className="text-[9px] text-slate-400">Cone: ±{vec.uncertaintyConeDegrees}° uncertainty</p>
+                </div>
+              </Tooltip>
+            </Polyline>
+          </React.Fragment>
+        );
+      })}
+
+      {/* C. Active Satellite Thermal Observations (NASA FIRMS VIIRS/MODIS) */}
+      {(hazardMode === "ALL" || hazardMode === "FIRE") && showFireDetections && fireObservations?.map((obs: any, idx: number) => {
+        if (!obs.latitude || !obs.longitude) return null;
+
+        return (
+          <Marker
+            key={`fire-obs-${obs.id || idx}`}
+            position={[obs.latitude, obs.longitude]}
+            icon={FIRE_HOTSPOT_ICON}
+            eventHandlers={{
+              click: (e) => {
+                L.DomEvent.stopPropagation(e);
+                onSelectFireObservation?.(obs);
+              },
+            }}
+          >
+            <Popup autoPan keepInView minWidth={260}>
+              <div className="p-2.5 max-w-xs font-sans text-xs">
+                <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-red-200">
+                  <div className="flex items-center gap-1.5 text-red-600 font-bold">
+                    <span>🔥 Active Thermal Detection</span>
+                  </div>
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 uppercase">
+                    {obs.confidenceCategory || obs.confidenceRaw} CONFIDENCE
+                  </span>
+                </div>
+
+                <div className="space-y-1 my-2 bg-red-50/70 p-2 rounded-lg border border-red-200">
+                  <p className="flex justify-between text-[11px]">
+                    <span className="text-slate-500">Sensor & Satellite:</span>
+                    <span className="font-bold text-slate-800">{obs.satellite} ({obs.instrument})</span>
+                  </p>
+                  <p className="flex justify-between text-[11px]">
+                    <span className="text-slate-500">Brightness Temp:</span>
+                    <span className="font-mono font-bold text-red-600">{obs.brightnessKelvin ? `${obs.brightnessKelvin} K` : "N/A"}</span>
+                  </p>
+                  {obs.fireRadiativePowerMW && (
+                    <p className="flex justify-between text-[11px]">
+                      <span className="text-slate-500">Fire Radiative Power:</span>
+                      <span className="font-mono font-bold text-red-700">{obs.fireRadiativePowerMW} MW</span>
+                    </p>
+                  )}
+                  <p className="flex justify-between text-[11px]">
+                    <span className="text-slate-500">H3 Cell:</span>
+                    <span className="font-mono text-slate-700">{obs.h3Index}</span>
+                  </p>
+                  <p className="flex justify-between text-[11px]">
+                    <span className="text-slate-500">Observation Time:</span>
+                    <span className="text-slate-700">
+                      {new Date(obs.observedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })} IST
+                    </span>
+                  </p>
+                  <p className="flex justify-between text-[11px]">
+                    <span className="text-slate-500">Provenance:</span>
+                    <span className="text-slate-600 text-[10px]">NASA FIRMS VIIRS NRT</span>
+                  </p>
+                </div>
+
+                {obs.isSimulated && (
+                  <p className="text-[9px] text-amber-700 bg-amber-50 p-1 rounded border border-amber-200 mb-2">
+                    ⚠️ Reference Historical Demonstration Detection (Simulated Fallback Mode)
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => onProposeDispatch?.(obs)}
+                  className="w-full mt-1 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <span>⚡ Propose Emergency Dispatch</span>
+                </button>
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
+
+      {/* D. Municipal Fire Brigade & Forest Range Stations */}
+      {(hazardMode === "ALL" || hazardMode === "FIRE") && showFireStations && emergencyStations?.map((st: any, idx: number) => {
+        if (!st.latitude || !st.longitude) return null;
+        const isForest = st.type === "FOREST_DEPARTMENT";
+
+        return (
+          <Marker
+            key={`st-${st.stationId || idx}`}
+            position={[st.latitude, st.longitude]}
+            icon={isForest ? FOREST_STATION_ICON : FIRE_STATION_ICON}
+          >
+            <Popup autoPan keepInView minWidth={240}>
+              <div className="p-2 max-w-xs font-sans text-xs">
+                <div className="flex items-center gap-1.5 mb-1 pb-1 border-b border-slate-200">
+                  <span className="text-sm">{isForest ? "🌲" : "🚒"}</span>
+                  <h4 className="font-bold text-slate-900 leading-tight">{st.name}</h4>
+                </div>
+                <p className="text-[10px] text-slate-500 mb-2">
+                  {isForest ? "Maharashtra Forest Department" : "Municipal Fire & Rescue Services"} • {st.jurisdictionWardOrZone || "Urban Jurisdiction"}
+                </p>
+                <div className="bg-slate-50 p-1.5 rounded border border-slate-200 text-[11px] mb-2">
+                  <p className="flex justify-between">
+                    <span className="text-slate-500">Helpline:</span>
+                    <span className="font-bold text-red-600">{st.contactPhone || "101"}</span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="text-slate-500">Status:</span>
+                    <span className="font-semibold text-emerald-600">{st.operationalStatus || "OPERATIONAL"}</span>
+                  </p>
+                  {st.apparatus && Array.isArray(st.apparatus) && st.apparatus.length > 0 && (
+                    <div className="mt-1 pt-1 border-t border-slate-200">
+                      <span className="text-[9px] text-slate-400 uppercase font-bold block">Apparatus:</span>
+                      <span className="text-[10px] text-slate-700">{st.apparatus.join(", ")}</span>
+                    </div>
+                  )}
+                </div>
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${st.latitude},${st.longitude}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-red-600 font-bold hover:underline flex items-center justify-end gap-1"
+                >
+                  Station Directions ↗
+                </a>
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
+
 
       {/* ─── Individual Facility Markers (No Aggregate Count Circles) ─── */}
       {showFacilities &&

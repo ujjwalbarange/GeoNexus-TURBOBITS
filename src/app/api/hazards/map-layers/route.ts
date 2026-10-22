@@ -29,6 +29,23 @@ export async function GET(req: NextRequest) {
     if (citySlug === "mumbai") {
       // Use verified Mumbai spatial adapter
       layers = mumbaiFloodAdapter.getMapLayerCollection(requestedLayers);
+      // Also load Mumbai Fire Brigade stations if fire or fire_stations requested
+      if (requestedLayers.includes("fire") || requestedLayers.includes("fire_stations")) {
+        const firePath = path.resolve(process.cwd(), "data", "mumbai", "mumbai_fire_brigade_clean.geojson");
+        if (fs.existsSync(firePath)) {
+          try {
+            layers["fire"] = JSON.parse(fs.readFileSync(firePath, "utf-8"));
+          } catch {}
+        }
+      }
+      if (requestedLayers.includes("forest") || requestedLayers.includes("environment")) {
+        const envPath = path.resolve(process.cwd(), "data", "mumbai", "mumbai_garden_and_environment_dept.geojson");
+        if (fs.existsSync(envPath)) {
+          try {
+            layers["forest"] = JSON.parse(fs.readFileSync(envPath, "utf-8"));
+          } catch {}
+        }
+      }
     } else if (citySlug === "pune") {
       // Return Pune civic, drainage, waterways & emergency GeoJSON layers
       const puneDir = path.resolve(process.cwd(), "data", "pune");
@@ -37,6 +54,7 @@ export async function GET(req: NextRequest) {
         disaster: "pune_disaster_management_departments.geojson",
         water_supply: "pune_water_supply_department_coordinates.geojson",
         fire: "pune_fire_brigade_stations.geojson",
+        forest: "pune_forest_department_coordinates.geojson",
         zonal: "pune_pmc_zonal_boundaries.geojson",
         waterways: "pune_waterways.geojson",
         hospitals: "pune_emergency_hospitals.geojson",
@@ -56,6 +74,7 @@ export async function GET(req: NextRequest) {
       const nagpurLayerMap: Record<string, string> = {
         zonal: "nagpur_nmc_zonal_boundaries.geojson",
         fire: "nagpur_fire_department.geojson",
+        forest: "nagpur_territorial_forest_dept_clean.geojson",
         water_works: "nagpur_nmc_water_works.geojson",
         solid_waste: "nagpur_nmc_solid_waste_management.geojson",
         police: "nagpur_city_police.geojson",

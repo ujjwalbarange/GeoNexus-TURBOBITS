@@ -79,4 +79,19 @@ export interface OsmIncidentMapProps {
   fitCityTrigger?: number;
   resetViewTrigger?: number;
   activeAlerts?: any[];
+  // Wildfire & Thermal Intelligence Extension:
+  hazardMode?: "ALL" | "FLOOD" | "FIRE";
+  showFireDetections?: boolean;
+  showFireRiskHeatmap?: boolean;
+  showFireStations?: boolean;
+  showFireSpreadVector?: boolean;
+  fireRiskOpacity?: number;
+  fireObservations?: any[];
+  fireRiskGeoJSON?: any;
+  fireSpreadVectors?: any[];
+  emergencyStations?: any[];
+  onSelectFireObservation?: (obs: any) => void;
+  onSelectH3Cell?: (cellProperties: any) => void;
+  onProposeDispatch?: (obs: any) => void;
 }
+

@@ -17,6 +17,8 @@ import {
 } from "../hazards/connectors/open-meteo";
 import { fetchSachetAlerts } from "../hazards/connectors/sachet";
 import { mumbaiFloodAdapter } from "../hazards/mumbai-flood-adapter";
+import { getActiveFireObservations } from "../hazards/connectors/firms";
+import { calculatePreFireRisk, getFireRiskCategory } from "../hazards/fire-risk-engine";
 
 import {
   type SentinelActionPayload,
@@ -177,7 +179,44 @@ export class SentinelAiEngine {
       });
     }
 
-    // 2. Retrieve Government Alerts
+    // 2. Wildfire & Thermal Anomaly Grounding
+    let firmsData: any = null;
+    let fireRiskScore = 20;
+    let fireRiskCategory = { displayLabel: "LOW RISK", color: "#10b981" };
+    try {
+      firmsData = await getActiveFireObservations(city);
+      if (firmsData) {
+        groundingSources.push({
+          name: `NASA FIRMS Thermal Hotspots: ${firmsData.deduplicatedCount} active anomaly detection(s) (${firmsData.source})`,
+          timestamp: firmsData.retrievedAt,
+          type: "SENSOR",
+        });
+      }
+      const drySpellDays = weather.rainfallRateMmH > 0 ? 0 : 12;
+      const riskAssessment = calculatePreFireRisk({
+        city,
+        h3Index: "screening-cell",
+        weather: {
+          temperatureCelsius: weather.temperatureCelsius ?? 30,
+          relativeHumidity: weather.relativeHumidity ?? 50,
+          windSpeedKmh: weather.windSpeedKmh ?? 15,
+          windGustsKmh: weather.windGustsKmh ?? 20,
+          windDirectionDegrees: weather.windDirectionDegrees ?? 240,
+          drySpellDays,
+        },
+      });
+      fireRiskScore = riskAssessment.riskScore;
+      fireRiskCategory = getFireRiskCategory(fireRiskScore);
+      groundingSources.push({
+        name: `Sentinel Pre-Fire Risk Screening Model (${fireRiskCategory.displayLabel})`,
+        timestamp: new Date().toISOString(),
+        type: "SENSOR",
+      });
+    } catch (err) {
+      console.warn("[SentinelAI] Wildfire grounding non-fatal error:", err);
+    }
+
+    // 3. Retrieve Government Alerts
     const sachetAlerts = await fetchSachetAlerts(city);
     for (const alt of sachetAlerts) {
       groundingSources.push({
@@ -270,10 +309,15 @@ GROUNDED REAL-TIME EVIDENCE (STRICT TRUTH):
 - Local Hydrological Assessment: ${hydroContextStr}
 - Active Official Alerts: ${dbAlerts.length > 0 ? dbAlerts.map(a => `[${a.severity}] ${a.headline}`).join("; ") : "No active municipal emergency warnings"}
 - State NDMA CAP Warnings: ${sachetAlerts.length > 0 ? sachetAlerts.map(a => a.headline).join("; ") : "No active national CAP disaster warnings for district"}
+- Wildfire & Thermal Intelligence:
+  * Active Satellite Hotspots: ${firmsData?.deduplicatedCount ?? 0} detected via NASA FIRMS (${firmsData?.source ?? "VIIRS/MODIS"})
+  * Pre-Fire Risk Screening Index: ${fireRiskScore}/100 (${fireRiskCategory.displayLabel})
+  * Dedicated Emergency Fire Response: Municipal Fire Brigade (Dial 101) & Forest Department Range Stations active
 - Recent Verified Citizen Reports: ${nearbyReports.length > 0 ? nearbyReports.map(r => `[${r.reference}] ${r.title}`).join("; ") : "No active waterlogging reports"}
 - Nearest Verified Emergency Shelter / Muster Points:
 ${nearestShelters.map(s => `  * ${s.name} - ${s.address} (Helpline: ${s.phone})`).join("\n")}
 - Municipal Emergency Helpline: ${cityConfig.hazardCapabilities.emergencyHelpline}
+- Fire Brigade Emergency Number: 101
 
 SAFETY & BRIEFING STRUCTURE (MANDATORY):
 When a citizen asks "What is happening in my area?" or asks for a general area briefing:
@@ -296,11 +340,21 @@ NON-NEGOTIABLE CONSTRAINTS:
     // 7. Contextual action logic & validation via Action Catalogue
     const highRainRisk = weather.rainfallRateMmH > 8 || weather.forecast24hTotalMm >= 25 || isSinkBasin;
     const mentionsWaterloggingOrFlood = /(flood|waterlog|drain|rain|water|puddle|choke|inundat)/i.test(message);
+    const mentionsFireOrSmoke = /(fire|smoke|wildfire|burn|flame|forest fire|thermal|heat)/i.test(message);
     const mentionsShelter = /(shelter|muster|relief|evacuat|camp)/i.test(message);
     const mentionsForecast = /(forecast|tomorrow|predict|outlook|next 24)/i.test(message);
     const mentionsWarning = /(warning|alert|sachet|imd|red alert|orange alert)/i.test(message);
 
     const rawActionsToValidate: any[] = [];
+
+    if (mentionsFireOrSmoke || (firmsData && firmsData.deduplicatedCount > 0)) {
+      rawActionsToValidate.push({
+        type: "VIEW_MAP",
+        label: `Inspect Fire & Thermal Hotspots Map`,
+        description: `View ${firmsData?.deduplicatedCount ?? 0} active satellite thermal observations and pre-fire risk surface for ${cityConfig.name}.`,
+        contextPayload: { city, layer: "wildfire" },
+      });
+    }
 
     if (highRainRisk || mentionsWaterloggingOrFlood) {
       rawActionsToValidate.push({
@@ -389,6 +443,19 @@ NON-NEGOTIABLE CONSTRAINTS:
       url: a.targetUrl,
     }));
 
+    if (mentionsFireOrSmoke) {
+      followUpActions.unshift({
+        label: "📞 Call Fire Brigade (101)",
+        action: "CALL_FIRE_BRIGADE",
+        url: "tel:101",
+      });
+      followUpActions.push({
+        label: "🔥 Report Fire/Smoke",
+        action: "REPORT_FIRE",
+        url: `/${city}/report?category=fire_hazard&location=${encodeURIComponent(localityLabel)}`,
+      });
+    }
+
     const structuredMetrics = {
       precipitationRateMmH: weather.rainfallRateMmH,
       forecast24hTotalMm: weather.forecast24hTotalMm,
@@ -397,14 +464,21 @@ NON-NEGOTIABLE CONSTRAINTS:
       usAqi: aqi.usAqi ?? "N/A",
       aqiCategory: aqi.category || "Unavailable",
       activeAlertsCount: dbAlerts.length + sachetAlerts.length,
+      wildfireHotspotsCount: firmsData?.deduplicatedCount ?? 0,
+      preFireRiskScore: fireRiskScore,
+      preFireRiskLevel: fireRiskCategory.displayLabel,
     };
 
     const client = this.getGroqClient();
 
     if (!client) {
       // Deterministic rule-based fallback if Groq API key is unconfigured
+      const fireSection = mentionsFireOrSmoke || (firmsData?.deduplicatedCount ?? 0) > 0
+        ? `\n- **Wildfire & Thermal Risk:** ${firmsData?.deduplicatedCount ? `${firmsData.deduplicatedCount} active hotspot(s) detected via NASA FIRMS satellite` : "No active thermal anomalies"}. Pre-fire screening score: ${fireRiskScore}/100 (${fireRiskCategory.displayLabel}).`
+        : "";
+
       return {
-        reply: `### Current Conditions in **${localityLabel} (${cityConfig.name})**\n\n- **Weather:** ${weather.weatherDescription} with ${weather.rainfallRateMmH > 0 ? `${weather.rainfallRateMmH.toFixed(1)} mm/hr precipitation` : "no active rainfall"} and ${currentTempStr}.\n- **24-Hour Outlook:** ${forecastRainStr}.\n- **Air Quality:** ${currentAqiStr}.\n- **Active Warnings:** ${dbAlerts.length > 0 ? dbAlerts[0].headline : "No active municipal emergency warnings."}\n- **What To Do:** Keep emergency contacts handy. If you notice pooling in low-lying underpasses, report it for field verification.\n\n*Emergency Helpline:* **${cityConfig.hazardCapabilities.emergencyHelpline}**`,
+        reply: `### Current Conditions in **${localityLabel} (${cityConfig.name})**\n\n- **Weather:** ${weather.weatherDescription} with ${weather.rainfallRateMmH > 0 ? `${weather.rainfallRateMmH.toFixed(1)} mm/hr precipitation` : "no active rainfall"} and ${currentTempStr}.\n- **24-Hour Outlook:** ${forecastRainStr}.\n- **Air Quality:** ${currentAqiStr}.${fireSection}\n- **Active Warnings:** ${dbAlerts.length > 0 ? dbAlerts[0].headline : "No active municipal emergency warnings."}\n- **What To Do:** Keep emergency contacts handy. If you notice pooling in low-lying underpasses or fire hazards, report it for field verification.\n\n*Emergency Helpline:* **${cityConfig.hazardCapabilities.emergencyHelpline}** · *Fire Brigade:* **101**`,
         groundingSources,
         nearestShelters,
         uncertaintyNotes: "Telemetry provided via direct sensor feeds; AI text synthesis is running in deterministic rule-based fallback mode.",

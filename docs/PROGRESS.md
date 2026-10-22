@@ -299,3 +299,19 @@
 - [x] **Zero Regressions & Clean Production Build**:
   - `npx tsc --noEmit` exited with 0 errors.
   - `npm run build` compiled all 59 static and dynamic routes successfully with exit code 0.
+
+---
+
+## Wildfire & Thermal Disaster Intelligence Extension (Continuous Project)
+
+| Phase | Description | Status | Evidence / Milestone |
+| :--- | :--- | :--- | :--- |
+| **Phase 1: Existing Architecture Audit** | Comprehensive audit of flood, civic response, GIS, map engine, datasets, and component reuse plan. | **COMPLETED** | Implementation plan in `docs/WILDFIRE_INTELLIGENCE_AUDIT_PHASE1.md`. Verified 100% preservation of Mumbai flood models and civic response flows. |
+| **Phase 2: Shared Hazard & Data Model** | Unified hazard abstraction (`FLOOD`, `WILDFIRE`, `URBAN_FIRE`, `THERMAL_ANOMALY`), SQL migration `005-wildfire-intelligence.sql`, normalized fire observation types. | **IN PROGRESS** | Typed contracts in `src/modules/hazards/contracts.ts` & DDL schema in `src/db/schema/005-wildfire-intelligence.sql`. |
+| **Phase 3: Active Fire Data Ingestion** | NASA FIRMS VIIRS & MODIS connector with caching, deduplication, confidence filtering, and mock fallback. | **PENDING** | `src/modules/hazards/connectors/firms.ts`. |
+| **Phase 4: Heatmaps & Spatial Visualization** | H3 hexagonal spatial aggregation (`h3-js`), pre-fire risk continuous heatmap, active thermal markers, layer controls, and legends. | **PENDING** | `src/modules/hazards/h3-grid.ts` and enhanced Leaflet / MapLibre layers. |
+| **Phase 5: Environmental Risk Prediction** | Multi-factor pre-fire risk scoring rubric (0–100) combining Open-Meteo weather, vegetation dryness, and terrain slope. | **PENDING** | `src/modules/hazards/fire-risk-engine.ts`. |
+| **Phase 6: Emergency Response Integration** | Integration of authentic municipal Fire Brigade & Forest Department stations, road ETA routing, and simulated dispatch. | **PENDING** | `src/modules/hazards/emergency-dispatch.ts`. |
+| **Phase 7: Timeline & Unified 2D/3D** | Synchronized temporal playback and coordinated 2D/3D canvas with pitch and H3 extruded columns. | **PENDING** | `src/components/maps/unified-hazard-canvas.tsx`. |
+| **Phase 8: Validation & Documentation** | Automated unit and integration test suite, regression checks, and final handover report. | **PENDING** | `scripts/test-wildfire-intelligence.mjs`. |
+

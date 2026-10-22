@@ -7,6 +7,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useCityContext } from "@/components/providers/city-provider";
 
 interface HazardFeedData {
@@ -47,25 +48,35 @@ interface HazardFeedData {
 export function SentinelHazardBanner({ onOpenAssistant }: { onOpenAssistant?: () => void }) {
   const { city, cityConfig } = useCityContext();
   const [feed, setFeed] = useState<HazardFeedData | null>(null);
+  const [wildfire, setWildfire] = useState<any>(null);
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     let mounted = true;
-    async function loadFeed() {
+    async function loadData() {
       try {
-        const res = await fetch(`/api/hazards/feed?city=${city}`);
-        if (res.ok) {
-          const json = await res.json();
+        const [feedRes, fireRes] = await Promise.all([
+          fetch(`/api/hazards/feed?city=${city}`),
+          fetch(`/api/hazards/wildfire?city=${city}`),
+        ]);
+        if (feedRes.ok) {
+          const json = await feedRes.json();
           if (json.success && mounted) {
             setFeed(json.data);
+          }
+        }
+        if (fireRes.ok) {
+          const fireJson = await fireRes.json();
+          if (fireJson.success && mounted) {
+            setWildfire(fireJson.data);
           }
         }
       } catch (err) {
         console.warn("[SentinelBanner] Non-fatal feed fetch error:", err);
       }
     }
-    loadFeed();
-    const interval = setInterval(loadFeed, 60000); // refresh every minute
+    loadData();
+    const interval = setInterval(loadData, 60000); // refresh every minute
     return () => {
       mounted = false;
       clearInterval(interval);
@@ -117,6 +128,49 @@ export function SentinelHazardBanner({ onOpenAssistant }: { onOpenAssistant?: ()
             <button
               onClick={() => setCollapsed(true)}
               className="text-rose-300 hover:text-white text-xs px-2 py-1 rounded"
+              title="Dismiss banner"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Satellite Thermal / Fire Hotspot Notification Banner ─── */}
+      {!primaryAlert && (wildfire?.activeDetections?.count || 0) > 0 && !collapsed && (
+        <div className="mb-3 p-4 rounded-2xl bg-gradient-to-r from-orange-950/90 via-red-950/85 to-amber-950/90 border border-orange-500/50 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl p-2 bg-orange-500/20 rounded-xl border border-orange-400/30 animate-pulse">
+              🔥
+            </span>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-orange-600 text-white font-mono">
+                  THERMAL ADVISORY
+                </span>
+                <span className="text-xs text-orange-200 font-mono">
+                  NASA FIRMS · {cityConfig.name.toUpperCase()}
+                </span>
+              </div>
+              <h4 className="font-bold text-sm text-white">
+                {wildfire.activeDetections.count} Active Satellite Thermal Anomaly Detected
+              </h4>
+              <p className="text-xs text-orange-100/90">
+                Satellite instruments detected elevated surface thermal signatures. Municipal Fire Brigade & Forest Rangers alerted.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+            <Link
+              href="/admin/map"
+              className="px-3.5 py-1.5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs transition-colors shadow-sm cursor-pointer"
+            >
+              Inspect Map ↗
+            </Link>
+            <button
+              onClick={() => setCollapsed(true)}
+              className="text-orange-300 hover:text-white text-xs px-2 py-1 rounded"
               title="Dismiss banner"
             >
               ✕
