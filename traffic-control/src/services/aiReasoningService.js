@@ -127,11 +127,11 @@ Explain:
     const systemPrompt = `You are a Principal Civil & Structural Highway Engineer advising municipal development authorities.
 Evaluate this urban grade-separation proposal with strict engineering objectivity.`;
 
-    const userPrompt = `Bottleneck Location: ${proposal.junctionName}
-- Identified Problem: ${proposal.identifiedBottleneck}
-- Proposed Structure: ${proposal.recommendedInfrastructure.name} (${proposal.recommendedInfrastructure.configuration})
-- Alternative Considered & Rejected: ${proposal.alternativeOption?.name} (Reason: ${proposal.alternativeOption?.reasonRejected})
-- Cost Class: ${proposal.recommendedInfrastructure.preliminaryCostCategory}
+    const userPrompt = `Bottleneck Location: ${proposal.junctionName || proposal.title || 'Arterial Junction'}
+- Identified Problem: ${proposal.identifiedBottleneck || proposal.problemDescription || 'Chronic congestion'}
+- Proposed Structure: ${proposal.recommendedInfrastructure?.name || proposal.title || proposal.proposedInfrastructureType} (${proposal.recommendedInfrastructure?.configuration || proposal.category || 'Grade Separator'})
+- Alternative Considered: ${proposal.alternativeOption?.name || 'Surface widening'} (Reason: ${proposal.alternativeOption?.reasonRejected || 'Geometric and ROW constraints'})
+- Cost Class: ${proposal.recommendedInfrastructure?.preliminaryCostCategory || proposal.estCost || 'Statutory Budget Class'}
 
 Provide:
 1. Engineering validation of why the recommended structure outperforms the rejected alternative.

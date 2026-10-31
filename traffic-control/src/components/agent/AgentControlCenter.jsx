@@ -411,18 +411,18 @@ export default function AgentControlCenter({
                 <div key={prop.id} className="info-card" style={{ marginBottom: '10px', borderLeft: '4px solid #a78bfa' }}>
                   <div style={{ fontWeight: 700, fontSize: '13px' }}>{prop.junctionName}</div>
                   <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', margin: '2px 0' }}>
-                    Choke Point: {prop.identifiedBottleneck}
+                    Choke Point: {prop.identifiedBottleneck || prop.problemDescription || 'Chronic intersection delay'}
                   </div>
 
                   <div style={{ background: 'var(--bg-dark-900)', padding: '8px', borderRadius: '6px', fontSize: '11px', margin: '8px 0' }}>
                     <div style={{ color: '#a78bfa', fontWeight: 700 }}>
-                      Proposed: {prop.recommendedInfrastructure.name}
+                      Proposed: {prop.recommendedInfrastructure?.name || prop.title || prop.proposedInfrastructureType || 'Grade Separator'}
                     </div>
                     <div style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>
-                      {prop.recommendedInfrastructure.configuration}
+                      {prop.recommendedInfrastructure?.configuration || prop.category || 'Grade-Separated Viaduct'}
                     </div>
                     <div style={{ color: '#38bdf8', marginTop: '4px', fontSize: '10px' }}>
-                      Est. Capital Cost: {prop.recommendedInfrastructure.preliminaryCostCategory}
+                      Est. Capital Cost: {prop.recommendedInfrastructure?.preliminaryCostCategory || prop.estCost || 'Statutory Budget'}
                     </div>
                   </div>
 

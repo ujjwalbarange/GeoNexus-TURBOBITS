@@ -30,6 +30,16 @@
     "expectedBenefits": "Eliminates 65% of surface cross-traffic waiting; throughput increases by +52%; saves 22 mins per commuter trip.",
     "engineeringConsiderations": "Utility diversion of 1800mm Vaitarna water transmission main and coordination with elevated Metro Line 2B pier portals.",
     "proposalStatus": "DETAILED_PROJECT_REPORT_READY",
+    "recommendedInfrastructure": {
+      "typeId": "flyover",
+      "name": "Kalanagar-BKC Multi-Tier Grade Separator & Elevated Connector",
+      "configuration": "Bifurcated Prestressed Segmental Box Girder",
+      "potentialAdvantages": "Eliminates 65% of surface cross-traffic waiting; throughput increases by +52%; saves 22 mins per commuter trip.",
+      "potentialDisadvantages": "Requires utility diversion of 1800mm Vaitarna water main.",
+      "landAcquisitionRequired": "Within existing municipal right-of-way.",
+      "preliminaryCostCategory": "₹340 Crores",
+      "engineeringFeasibilityRequirements": "Utility diversion of 1800mm Vaitarna water transmission main."
+    },
     "architecturalConcept": {
       "planType": "Bifurcated Prestressed Segmental Box Girder",
       "deckElevationM": 9.2,
@@ -71,6 +81,16 @@
     "expectedBenefits": "Guarantees 100% year-round transit during monsoons; throughput increases by +44%.",
     "engineeringConsiderations": "Deep pile foundations into basalt bedrock; elevated 6.5m above 100-year flood datum line.",
     "proposalStatus": "ENVIRONMENTAL_CLEARANCE_PENDING",
+    "recommendedInfrastructure": {
+      "typeId": "elevated_corridor",
+      "name": "Sion-Dharavi Mithi River Elevated Waterlogging Bypass",
+      "configuration": "Continuous High-Level Viaduct above Inundation Basin",
+      "potentialAdvantages": "Guarantees 100% year-round transit during monsoons; throughput increases by +44%.",
+      "potentialDisadvantages": "Requires deep pile foundations into basalt bedrock.",
+      "landAcquisitionRequired": "Within railway corridor and municipal highway reserve.",
+      "preliminaryCostCategory": "₹480 Crores",
+      "engineeringFeasibilityRequirements": "Deep pile foundations into basalt bedrock; elevated 6.5m above flood datum."
+    },
     "architecturalConcept": {
       "planType": "Continuous High-Level Viaduct above Inundation Basin",
       "deckElevationM": 8.0,
@@ -112,6 +132,16 @@
     "expectedBenefits": "Completely isolates freight trucks from urban commuters; reduces peak junction wait time by 48%.",
     "engineeringConsiderations": "High-mast illumination, grade stabilization of approach ramps, stormwater drainage into nearby minor nullah.",
     "proposalStatus": "TENDER_NOTIFICATION_ACTIVE",
+    "recommendedInfrastructure": {
+      "typeId": "grade_separated_interchange",
+      "name": "Nagpur Outer Ring Road & Wardha Road Grade-Separated Rotary",
+      "configuration": "Four-Leaf Partial Cloverleaf Interchange with Depressed Through-Pass",
+      "potentialAdvantages": "Completely isolates freight trucks from urban commuters; reduces peak junction wait time by 48%.",
+      "potentialDisadvantages": "Requires ramp stabilization.",
+      "landAcquisitionRequired": "NHAI reserve acquired.",
+      "preliminaryCostCategory": "₹210 Crores",
+      "engineeringFeasibilityRequirements": "High-mast illumination, grade stabilization of approach ramps."
+    },
     "architecturalConcept": {
       "planType": "Grade-Separated Cloverleaf Interchange with Slip Ramps",
       "deckElevationM": 7.5,
@@ -153,6 +183,16 @@
     "expectedBenefits": "Diverts through-highway traffic beneath surface grade; eliminates 22 mins daily transit delay.",
     "engineeringConsiderations": "Underground telecommunication fiber relocation and high-capacity submersible pump well installation.",
     "proposalStatus": "PWD_TECHNICAL_SANCTION_GRANTED",
+    "recommendedInfrastructure": {
+      "typeId": "rub",
+      "name": "Amravati Road (NH-53) Wadi Freight Underpass & Junction Redesign",
+      "configuration": "Dual Reinforced Box Culvert Underpass with Retaining Walls",
+      "potentialAdvantages": "Diverts through-highway traffic beneath surface grade; eliminates 22 mins daily transit delay.",
+      "potentialDisadvantages": "Requires high-capacity submersible pump well installation.",
+      "landAcquisitionRequired": "Municipal road right-of-way.",
+      "preliminaryCostCategory": "₹165 Crores",
+      "engineeringFeasibilityRequirements": "Underground telecommunication fiber relocation and high-capacity submersible pump well."
+    },
     "architecturalConcept": {
       "planType": "Dual Reinforced Box Culvert Underpass with Retaining Walls",
       "deckElevationM": -5.8,
@@ -194,6 +234,16 @@
     "expectedBenefits": "Combines elevated rapid rail with 4-lane grade-separated vehicular deck; throughput increases by +64%.",
     "engineeringConsiderations": "Coordinated launching with Pune Metro Line 3 concessionaire; integrated portal piers supporting rail deck at +15.5m and highway deck at +8.5m.",
     "proposalStatus": "PMRDA_ACTIVE_EXECUTION_PIPELINE",
+    "recommendedInfrastructure": {
+      "typeId": "flyover",
+      "name": "Hinjawadi IT Corridor Shivaji Chowk Double-Decker Metro-Flyover",
+      "configuration": "Composite Steel-Concrete Double-Decker Rail & Road Viaduct",
+      "potentialAdvantages": "Combines elevated rapid rail with 4-lane grade-separated vehicular deck; throughput increases by +64%.",
+      "potentialDisadvantages": "Requires synchronized construction alongside Pune Metro Line 3 elevated piers.",
+      "landAcquisitionRequired": "MIDC and PMRDA road reserve already acquired.",
+      "preliminaryCostCategory": "₹620 Crores",
+      "engineeringFeasibilityRequirements": "Coordinated launching with Pune Metro Line 3 concessionaire."
+    },
     "architecturalConcept": {
       "planType": "Composite Steel-Concrete Double-Decker Rail & Road Viaduct",
       "deckElevationM": 15.5,
@@ -235,6 +285,16 @@
     "expectedBenefits": "Uninterrupted pass-through between Shivajinagar and Aundh/Baner; reduces intersection delay by 58%.",
     "engineeringConsiderations": "Deep foundation piling in basalt; night-time precast girder launching during off-peak hours.",
     "proposalStatus": "ACTIVE_CONSTRUCTION",
+    "recommendedInfrastructure": {
+      "typeId": "flyover",
+      "name": "Pune University Circle Multi-Tier Grade Separation Flyover",
+      "configuration": "Multi-Level Integrated Directional Flyover Network",
+      "potentialAdvantages": "Uninterrupted pass-through between Shivajinagar and Aundh/Baner; reduces intersection delay by 58%.",
+      "potentialDisadvantages": "Night-time precast girder launching during off-peak hours.",
+      "landAcquisitionRequired": "Within Pune Municipal Corporation highway reserve.",
+      "preliminaryCostCategory": "₹410 Crores",
+      "engineeringFeasibilityRequirements": "Deep foundation piling in basalt."
+    },
     "architecturalConcept": {
       "planType": "Multi-Level Integrated Directional Flyover Network",
       "deckElevationM": 12.0,

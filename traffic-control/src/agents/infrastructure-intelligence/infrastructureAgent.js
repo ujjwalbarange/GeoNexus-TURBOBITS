@@ -20,8 +20,9 @@ export class InfrastructureAgent {
       classifications: bridgeClassifications,
       proposalsCount: proposals.length,
       proposals: proposals.map((prop) => {
+        const targetTypeId = prop.recommendedInfrastructure?.typeId || prop.typeId || 'flyover';
         const fullClass = bridgeClassifications.find(
-          (b) => b.typeId === prop.recommendedInfrastructure.typeId
+          (b) => b.typeId === targetTypeId
         );
         return {
           ...prop,
