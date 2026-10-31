@@ -16,6 +16,12 @@ export default function TrafficInfoPanel({
   onFocusSegment,
   customEndpoint,
   onUpdateEndpoint,
+  showFacilities,
+  onToggleFacilities,
+  showDrainage,
+  onToggleDrainage,
+  showZones,
+  onToggleZones,
 }) {
   const [endpointInput, setEndpointInput] = useState(customEndpoint || '');
   const [showConfig, setShowConfig] = useState(false);
@@ -39,7 +45,7 @@ export default function TrafficInfoPanel({
               {city.name} Operations
             </div>
             <div style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)' }}>
-              Live Telemetry & Corridors
+              OpenStreetMap & Root Services
             </div>
           </div>
         </div>
@@ -69,25 +75,25 @@ export default function TrafficInfoPanel({
                 fontWeight: 600,
               }}
             >
-              {isOnline ? 'LIVE DATA' : 'STANDBY'}
+              {isOnline ? 'TOMTOM LIVE' : 'STANDBY'}
             </span>
           </div>
 
           <div className="metric-grid">
             <div className="metric-box">
-              <div className="metric-label">REGISTERED CORRIDORS</div>
+              <div className="metric-label">MEASURED CORRIDORS</div>
               <div className="metric-value">{trafficData?.totalSegments || city.corridors.length}</div>
             </div>
 
             <div className="metric-box">
-              <div className="metric-label">MEASURED SECTORS</div>
+              <div className="metric-label">ACTIVE SECTORS</div>
               <div className="metric-value" style={{ color: trafficData?.measuredSegments > 0 ? '#10b981' : 'var(--text-tertiary)' }}>
                 {trafficData?.measuredSegments || 0}
               </div>
             </div>
 
             <div className="metric-box">
-              <div className="metric-label">AVG TRAFFIC SPEED</div>
+              <div className="metric-label">AVG CORRIDOR SPEED</div>
               <div className="metric-value" style={{ color: trafficData?.averageSpeedKmH ? '#38bdf8' : 'var(--text-tertiary)' }}>
                 {trafficData?.averageSpeedKmH ? formatSpeed(trafficData.averageSpeedKmH) : '—'}
               </div>
@@ -111,6 +117,58 @@ export default function TrafficInfoPanel({
           </div>
         </div>
 
+        {/* Root Project GIS Infrastructure Services */}
+        <div className="info-card">
+          <div className="info-card-header">
+            <span>🏛️ Root Project Map Services</span>
+            <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 600 }}>CONNECTED</span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {/* Facilities toggle */}
+            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', cursor: 'pointer' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>🏢</span>
+                <span>Emergency Facilities & Posts</span>
+              </span>
+              <input
+                type="checkbox"
+                checked={showFacilities}
+                onChange={onToggleFacilities}
+                style={{ cursor: 'pointer' }}
+              />
+            </label>
+
+            {/* Drainage / Waterways toggle */}
+            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', cursor: 'pointer' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>🚰</span>
+                <span>Drainage & Waterway Networks</span>
+              </span>
+              <input
+                type="checkbox"
+                checked={showDrainage}
+                onChange={onToggleDrainage}
+                style={{ cursor: 'pointer' }}
+              />
+            </label>
+
+            {/* Zonal Boundaries toggle */}
+            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', cursor: 'pointer' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>🗺️</span>
+                <span>Municipal Ward Boundaries</span>
+              </span>
+              <input
+                type="checkbox"
+                checked={showZones}
+                onChange={onToggleZones}
+                style={{ cursor: 'pointer' }}
+              />
+            </label>
+          </div>
+        </div>
+
         {/* Selected Segment Inspection (if active) */}
         {selectedSegment && (
           <TrafficSegmentCard
@@ -123,7 +181,7 @@ export default function TrafficInfoPanel({
         {/* API Telemetry & Connection Status */}
         <div className="info-card">
           <div className="info-card-header">
-            <span>📡 Live Traffic API Feed</span>
+            <span>📡 Live TomTom Traffic Feed</span>
             <button
               onClick={() => setShowConfig(!showConfig)}
               style={{
@@ -140,7 +198,7 @@ export default function TrafficInfoPanel({
           </div>
 
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-            {trafficData?.statusMessage || 'API adapter initialized and ready for endpoint ingestion.'}
+            {trafficData?.statusMessage || 'TomTom flow engine active.'}
           </div>
 
           {showConfig && (

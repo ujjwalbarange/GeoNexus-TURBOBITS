@@ -13,6 +13,11 @@ export default function DashboardPage() {
   const [selectedSegment, setSelectedSegment] = useState(null);
   const [focusTrigger, setFocusTrigger] = useState(0);
 
+  // Root Map Services Layer Toggles
+  const [showFacilities, setShowFacilities] = useState(true);
+  const [showDrainage, setShowDrainage] = useState(true);
+  const [showZones, setShowZones] = useState(false);
+
   const {
     trafficData,
     loading,
@@ -53,13 +58,16 @@ export default function DashboardPage() {
 
       {/* Main Operations Body */}
       <main className="dashboard-body">
-        {/* Central Map Canvas */}
+        {/* Central Map Canvas (OpenStreetMap Default + TomTom Live Traffic + Root Services) */}
         <TrafficMap
           selectedCityId={selectedCityId}
           trafficData={trafficData}
           selectedSegment={selectedSegment}
           onSelectSegment={setSelectedSegment}
           focusTrigger={focusTrigger}
+          showFacilities={showFacilities}
+          showDrainage={showDrainage}
+          showZones={showZones}
         />
 
         {/* Sliding Operations Panel */}
@@ -75,6 +83,12 @@ export default function DashboardPage() {
           onFocusSegment={handleFocusSegment}
           customEndpoint={customEndpoint}
           onUpdateEndpoint={setApiEndpoint}
+          showFacilities={showFacilities}
+          onToggleFacilities={() => setShowFacilities(!showFacilities)}
+          showDrainage={showDrainage}
+          onToggleDrainage={() => setShowDrainage(!showDrainage)}
+          showZones={showZones}
+          onToggleZones={() => setShowZones(!showZones)}
         />
       </main>
     </div>

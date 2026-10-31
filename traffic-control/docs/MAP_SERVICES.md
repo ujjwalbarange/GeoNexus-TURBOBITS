@@ -2,18 +2,31 @@
 
 ## 1. Map Providers & Tile Sources
 
-The application is pre-configured with four complementary tile providers tailored for traffic operations:
+The application uses **OpenStreetMap (OSM)** as its default, primary cartographic basemap, with optional toggles for Dark Ops, Vector, and Satellite modes:
 
 | Provider | Theme / Mode | URL Template | Authentication | Optimal Use Case |
 | :--- | :--- | :--- | :--- | :--- |
-| **CARTO Dark Matter** | Dark Operations (Default) | `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png` | None (Open access) | Primary nighttime & command center operations; maximum contrast for traffic neon lines |
-| **OpenStreetMap Standard** | Standard Cartography | `https://tile.openstreetmap.org/{z}/{x}/{y}.png` | None (Attribution required) | Daylight urban street inspection |
-| **Esri World Imagery** | Satellite Imagery | `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}` | None (Open access) | Terrain & highway infrastructure correlation |
+| **OpenStreetMap Standard** | Standard Cartography (Default) | `https://tile.openstreetmap.org/{z}/{x}/{y}.png` | None (Attribution required) | Primary default street-level traffic navigation & infrastructure inspection |
+| **CARTO Dark Matter** | Dark Operations (Night Theme) | `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png` | None (Open access) | Low-light control room monitoring; high contrast for traffic neon lines |
 | **MapTiler Streets** | Vector Raster Tiles | `https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key={KEY}` | `VITE_MAPTILER_API_KEY` | High-DPI street labels and administrative overlays |
+| **Esri World Imagery** | Satellite Imagery | `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}` | None (Open access) | Terrain & highway infrastructure correlation |
 
 ---
 
-## 2. Traffic Color Standards & Classification Heuristics
+## 2. Root Project Map Services Integration
+
+`traffic-control/` connects directly to the root Next.js project (`http://localhost:3000`) to reuse its spatial datasets and endpoints without code duplication:
+
+| Endpoint | Source in Root | Purpose in Traffic Dashboard |
+| :--- | :--- | :--- |
+| `/api/admin/map-data?city={city}` | `src/app/api/admin/map-data/route.ts` | Ingests real municipal facilities (Police Stations, Traffic Posts, Fire Stations, Hospitals) and Ward/Zone boundaries |
+| `/api/hazards/map-layers?city={city}` | `src/app/api/hazards/map-layers/route.ts` | Ingests verified GeoJSON drainage networks and natural waterways for flood/monsoon traffic risk correlation |
+
+All root GIS layers can be toggled on or off from the **Root Project Map Services** card in the dashboard sidebar.
+
+---
+
+## 3. Traffic Color Standards & Classification Heuristics
 
 Congestion classification strictly follows the prompt requirements:
 
@@ -34,70 +47,32 @@ Speed Ratio = Current Measured Speed (km/h) / Free-Flow Speed Limit (km/h)
 
 ---
 
-## 3. Traffic API Integration Architecture
+## 4. Live TomTom Traffic Engine Integration
 
-The API client (`src/services/trafficApi.js`) and normalizer (`src/services/trafficNormalizer.js`) accept multiple response shapes:
+The dashboard integrates TomTom Traffic Services using the provided key:
 
-### Supported Input Formats:
-
-#### Format A: GeoJSON FeatureCollection
-```json
-{
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [[72.8402, 19.0544], [72.8520, 19.0833]]
-      },
-      "properties": {
-        "segment_id": "mum_weh_01",
-        "name": "Western Express Highway",
-        "currentSpeed": 38,
-        "freeFlowSpeed": 80,
-        "delay": 420
-      }
-    }
-  ]
-}
-```
-
-#### Format B: REST Segment Array
-```json
-{
-  "status": "success",
-  "city": "mumbai",
-  "segments": [
-    {
-      "id": "mum_weh_01",
-      "roadName": "Western Express Highway",
-      "code": "WEH",
-      "coordinates": [[19.0544, 72.8402], [19.0833, 72.8520]],
-      "currentSpeed": 45,
-      "speedLimit": 80,
-      "delay": 180
-    }
-  ]
-}
-```
+1. **Live Traffic Flow Tiles (Whole-City Coverage)**:
+   ```text
+   https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key={VITE_TOMTOM_API_KEY}
+   ```
+2. **Corridor Flow Segment Data**:
+   ```text
+   https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/12/json?point={lat},{lng}&unit=KMPH&key={VITE_TOMTOM_API_KEY}
+   ```
+3. **Live Incident Details**:
+   ```text
+   https://api.tomtom.com/traffic/services/5/incidentDetails?bbox={minLon},{minLat},{maxLon},{maxLat}&key={VITE_TOMTOM_API_KEY}
+   ```
 
 ---
 
-## 4. Environment Variables
+## 5. Environment Variables
 
 | Variable | Required | Default | Purpose |
 | :--- | :--- | :--- | :--- |
+| `VITE_ROOT_API_URL` | Optional | `http://localhost:3000` | Root project map services URL |
+| `VITE_DEFAULT_MAP_STYLE` | Optional | `osm-standard` | Default basemap (`osm-standard`) |
+| `VITE_TOMTOM_API_KEY` | Recommended | Provided | TomTom Live Traffic API Key |
 | `VITE_MAPTILER_API_KEY` | Optional | `vfych9w2Nh5AGjIQ7jgL` | MapTiler vector basemap client key |
-| `VITE_TRAFFIC_API_URL` | Optional | `""` | User-provided live traffic API endpoint URL |
-| `VITE_TRAFFIC_API_KEY` | Optional | `""` | Bearer token / API key for traffic feed |
-| `VITE_TRAFFIC_REFRESH_INTERVAL_MS` | Optional | `30000` | Polling frequency (30,000ms = 30s) |
+| `VITE_TRAFFIC_REFRESH_INTERVAL_MS` | Optional | `30000` | Polling frequency (30 seconds) |
 | `VITE_DEFAULT_CITY` | Optional | `mumbai` | Initial selected city (`mumbai`, `nagpur`, `pune`) |
-
----
-
-## 5. Security & Rate Limiting Guidelines
-
-1. **Browser-Safe Keys Only**: Only public tile keys with HTTP referrer restrictions should exist in client `.env` files.
-2. **Local Proxy Option**: If the live traffic provider requires a private secret key or lacks CORS headers, run a lightweight local proxy adapter (e.g. Express or Vite dev proxy) rather than exposing credentials in client code.
-3. **Abuse Prevention**: Polling is throttled to 30s intervals by default to respect provider rate limits.
