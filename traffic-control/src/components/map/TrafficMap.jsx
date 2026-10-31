@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import '../../styles/map.css';
@@ -27,6 +27,7 @@ export default function TrafficMap({
   selectedProviderId = DEFAULT_MAP_PROVIDER_ID,
   fitTrigger = 0,
   resetTrigger = 0,
+  isActive = true,
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -39,8 +40,6 @@ export default function TrafficMap({
   const policeLayerGroupRef = useRef(null);
   const drainageLayerGroupRef = useRef(null);
   const redZonesLayerGroupRef = useRef(null);
-
-  const currentCity = CITIES[selectedCityId] || CITIES.mumbai;
 
   // 1. Initialize Leaflet Map on Mount
   useEffect(() => {
@@ -57,14 +56,21 @@ export default function TrafficMap({
     const initialCity = CITIES[selectedCityId] || CITIES.mumbai;
     const provider = MAP_PROVIDERS.find((p) => p.id === selectedProviderId) || MAP_PROVIDERS[0];
 
-    // Hardware-accelerated canvas Leaflet with strict city bounds isolation
+    const cityBounds = initialCity.bounds;
+    // Cushioned envelope so screen aspect ratio never breaks or clamps to NaN
+    const paddedBounds = [
+      [cityBounds[0][0] - 0.25, cityBounds[0][1] - 0.25],
+      [cityBounds[1][0] + 0.25, cityBounds[1][1] + 0.25],
+    ];
+
+    // Hardware-accelerated canvas Leaflet
     const map = L.map(mapContainerRef.current, {
       center: initialCity.center,
-      zoom: initialCity.defaultZoom,
-      minZoom: 10,
+      zoom: initialCity.defaultZoom || 12,
+      minZoom: 9,
       maxZoom: 18,
-      maxBounds: initialCity.bounds,
-      maxBoundsViscosity: 1.0, // Prevents panning outside city
+      maxBounds: paddedBounds,
+      maxBoundsViscosity: 0.8,
       zoomControl: false,
       preferCanvas: true,
       attributionControl: true,
@@ -75,17 +81,17 @@ export default function TrafficMap({
       subdomains: provider.subdomains || 'abc',
       maxZoom: provider.maxZoom || 19,
       attribution: provider.attribution,
-    }).addTo(map);
+    });
+    baseTileLayer.addTo(map);
 
     baseTileLayerRef.current = baseTileLayer;
 
-    // TomTom Live Flow Overlay Tile Layer — bounded strictly to city bounds
+    // TomTom Live Flow Overlay Tile Layer
     const tomtomUrl = trafficApiClient.getTrafficTileUrl('relative0');
     if (tomtomUrl) {
       const tomtomTileLayer = L.tileLayer(tomtomUrl, {
         maxZoom: 18,
         opacity: 0.85,
-        bounds: initialCity.bounds,
         attribution: '&copy; <a href="https://www.tomtom.com" target="_blank" rel="noreferrer">TomTom</a>',
       });
 
@@ -110,15 +116,18 @@ export default function TrafficMap({
 
     mapInstanceRef.current = map;
 
-    // Handle container sizing
+    // Invalidate size immediately and after layout settles
     const invalidate = () => map.invalidateSize();
+    requestAnimationFrame(invalidate);
     const timer1 = setTimeout(invalidate, 100);
-    const timer2 = setTimeout(invalidate, 400);
+    const timer2 = setTimeout(invalidate, 300);
+    const timer3 = setTimeout(invalidate, 600);
     window.addEventListener('resize', invalidate);
 
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
+      clearTimeout(timer3);
       window.removeEventListener('resize', invalidate);
       trafficManager.destroy();
       map.remove();
@@ -126,24 +135,46 @@ export default function TrafficMap({
     };
   }, []);
 
-  // 2. City Switching: flyTo city center and update strict boundary bounds
+  // 2. Handle Tab Visibility / Active state (Fixes black screen when switching to Live Traffic Map)
+  useEffect(() => {
+    if (isActive && mapInstanceRef.current) {
+      const invalidate = () => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      };
+      requestAnimationFrame(invalidate);
+      const t1 = setTimeout(invalidate, 50);
+      const t2 = setTimeout(invalidate, 150);
+      const t3 = setTimeout(invalidate, 400);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+      };
+    }
+  }, [isActive]);
+
+  // 3. City Switching: flyTo city center and update boundary bounds
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
     const city = CITIES[selectedCityId] || CITIES.mumbai;
-    map.setMaxBounds(city.bounds);
-    map.flyTo(city.center, city.defaultZoom, {
-      duration: 1.2,
+    const cityBounds = city.bounds;
+    const paddedBounds = [
+      [cityBounds[0][0] - 0.25, cityBounds[0][1] - 0.25],
+      [cityBounds[1][0] + 0.25, cityBounds[1][1] + 0.25],
+    ];
+
+    map.setMaxBounds(paddedBounds);
+    map.flyTo(city.center, city.defaultZoom || 12, {
+      duration: 1.0,
       easeLinearity: 0.25,
     });
-
-    if (tomtomTileLayerRef.current) {
-      tomtomTileLayerRef.current.options.bounds = city.bounds;
-    }
   }, [selectedCityId]);
 
-  // 3. Tile Provider Switching
+  // 4. Tile Provider Switching
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !baseTileLayerRef.current) return;
@@ -164,7 +195,7 @@ export default function TrafficMap({
     baseTileLayerRef.current = newBase;
   }, [selectedProviderId]);
 
-  // 4. Ingest and Render Authentic Ward / Zonal Boundaries
+  // 5. Ingest and Render Authentic Ward / Zonal Boundaries
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !wardsLayerGroupRef.current) return;
@@ -174,47 +205,47 @@ export default function TrafficMap({
     if (!showZones) return;
 
     async function loadBoundaries() {
-      const geojson = await geoDataService.getCityBoundaries(selectedCityId);
-      if (!geojson || !geojson.features) return;
+      try {
+        const geojson = await geoDataService.getCityBoundaries(selectedCityId);
+        if (!geojson || !geojson.features || !mapInstanceRef.current) return;
 
-      const layer = L.geoJSON(geojson, {
-        style: (feat) => {
-          return {
+        const layer = L.geoJSON(geojson, {
+          style: () => ({
             color: '#3b82f6',
             weight: 1.5,
             fillColor: '#3b82f6',
             fillOpacity: 0.08,
             opacity: 0.8,
             dashArray: '3, 4',
-          };
-        },
-        onEachFeature: (feature, l) => {
-          const wardInfo = geoDataService.extractWardInfo(feature, selectedCityId);
+          }),
+          onEachFeature: (feature, l) => {
+            const wardInfo = geoDataService.extractWardInfo(feature, selectedCityId);
 
-          // Tooltip on hover
-          l.bindTooltip(`
-            <div style="font-family: 'Inter', sans-serif; font-size: 11px; padding: 2px;">
-              <strong style="color: #0f172a; font-size: 12px;">${wardInfo.name}</strong><br/>
-              <span style="color: #64748b;">${wardInfo.areaSqKm ? `Area: ${wardInfo.areaSqKm} km²` : 'Municipal Sector'}</span><br/>
-              <span style="color: #2563eb; font-weight: 700;">Click to view Sector Intelligence →</span>
-            </div>
-          `, { sticky: true, className: 'ward-tooltip' });
+            l.bindTooltip(`
+              <div style="font-family: 'Inter', sans-serif; font-size: 11px; padding: 2px;">
+                <strong style="color: #0f172a; font-size: 12px;">${wardInfo.name}</strong><br/>
+                <span style="color: #64748b;">${wardInfo.areaSqKm ? `Area: ${wardInfo.areaSqKm} km²` : 'Municipal Sector'}</span><br/>
+                <span style="color: #2563eb; font-weight: 700;">Click to view Sector Intelligence →</span>
+              </div>
+            `, { sticky: true, className: 'ward-tooltip' });
 
-          // Click to open contextual Ward Drawer
-          l.on('click', (e) => {
-            L.DomEvent.stopPropagation(e);
-            if (onSelectWard) onSelectWard(wardInfo);
-          });
-        },
-      });
+            l.on('click', (e) => {
+              L.DomEvent.stopPropagation(e);
+              if (onSelectWard) onSelectWard(wardInfo);
+            });
+          },
+        });
 
-      wardsLayerGroupRef.current.addLayer(layer);
+        wardsLayerGroupRef.current.addLayer(layer);
+      } catch (err) {
+        console.warn('[TrafficMap] Failed to render boundaries:', err);
+      }
     }
 
     loadBoundaries();
   }, [selectedCityId, showZones, onSelectWard]);
 
-  // 5. Ingest and Render Verified Police Posts
+  // 6. Ingest and Render Verified Police Posts
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !policeLayerGroupRef.current) return;
@@ -224,61 +255,66 @@ export default function TrafficMap({
     if (!showFacilities) return;
 
     async function loadPolice() {
-      const geojson = await geoDataService.getCityPoliceUnits(selectedCityId);
-      if (!geojson || !geojson.features) return;
+      try {
+        const geojson = await geoDataService.getCityPoliceUnits(selectedCityId);
+        if (!geojson || !geojson.features || !mapInstanceRef.current) return;
 
-      geojson.features.forEach((feat) => {
-        const coords = feat.geometry?.coordinates;
-        if (!coords || coords.length < 2) return;
-        const [lon, lat] = coords;
+        geojson.features.forEach((feat) => {
+          const coords = feat.geometry?.coordinates;
+          if (!coords || coords.length < 2) return;
+          const [lon, lat] = coords;
+          if (isNaN(lat) || isNaN(lon)) return;
 
-        const p = feat.properties || {};
-        const stationName = p.name || p.NAME || p.station_name || 'Traffic Police Post';
+          const p = feat.properties || {};
+          const stationName = p.name || p.NAME || p.station_name || 'Traffic Police Post';
 
-        const policeIcon = L.divIcon({
-          className: 'custom-police-marker',
-          html: `
-            <div style="
-              width: 28px;
-              height: 28px;
-              border-radius: 8px;
-              background: #0f172a;
-              border: 1.5px solid #3b82f6;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 14px;
-              cursor: pointer;
-            ">🚓</div>
-          `,
-          iconSize: [28, 28],
-          iconAnchor: [14, 14],
-          popupAnchor: [0, -14],
+          const policeIcon = L.divIcon({
+            className: 'custom-police-marker',
+            html: `
+              <div style="
+                width: 28px;
+                height: 28px;
+                border-radius: 8px;
+                background: #0f172a;
+                border: 1.5px solid #3b82f6;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+                cursor: pointer;
+              ">🚓</div>
+            `,
+            iconSize: [28, 28],
+            iconAnchor: [14, 14],
+            popupAnchor: [0, -14],
+          });
+
+          const marker = L.marker([lat, lon], { icon: policeIcon });
+
+          marker.bindPopup(`
+            <div style="font-family: 'Inter', sans-serif; font-size: 12px; color: #0f172a; padding: 4px; max-width: 220px;">
+              <strong style="color: #2563eb; font-size: 13px;">🚓 ${stationName}</strong>
+              <div style="color: #64748b; margin-top: 2px;">Metropolitan Police Traffic Division</div>
+              <div style="color: #10b981; font-weight: 700; margin-top: 4px;">● VERIFIED ON-DUTY POST</div>
+            </div>
+          `);
+
+          marker.on('click', () => {
+            if (onSelectPolice) onSelectPolice({ name: stationName, latitude: lat, longitude: lon, properties: p });
+          });
+
+          policeLayerGroupRef.current.addLayer(marker);
         });
-
-        const marker = L.marker([lat, lon], { icon: policeIcon });
-
-        marker.bindPopup(`
-          <div style="font-family: 'Inter', sans-serif; font-size: 12px; color: #0f172a; padding: 4px; max-width: 220px;">
-            <strong style="color: #2563eb; font-size: 13px;">🚓 ${stationName}</strong>
-            <div style="color: #64748b; margin-top: 2px;">Metropolitan Police Traffic Division</div>
-            <div style="color: #10b981; font-weight: 700; margin-top: 4px;">● VERIFIED ON-DUTY POST</div>
-          </div>
-        `);
-
-        marker.on('click', () => {
-          if (onSelectPolice) onSelectPolice({ name: stationName, latitude: lat, longitude: lon, properties: p });
-        });
-
-        policeLayerGroupRef.current.addLayer(marker);
-      });
+      } catch (err) {
+        console.warn('[TrafficMap] Failed to render police posts:', err);
+      }
     }
 
     loadPolice();
   }, [selectedCityId, showFacilities, onSelectPolice]);
 
-  // 6. Ingest and Render Drainage Corridors (Root Map Service Integration)
+  // 7. Ingest and Render Drainage Corridors (Root Map Service Integration)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !drainageLayerGroupRef.current) return;
@@ -288,30 +324,34 @@ export default function TrafficMap({
     if (!showDrainage) return;
 
     async function loadDrainage() {
-      const layersData = await rootMapService.fetchCityLayers(selectedCityId, ['drainage', 'waterways']);
-      const drainageGeo = layersData.layers?.drainage || layersData.layers?.waterways;
+      try {
+        const layersData = await rootMapService.fetchCityLayers(selectedCityId, ['drainage', 'waterways']);
+        const drainageGeo = layersData.layers?.drainage || layersData.layers?.waterways;
 
-      if (drainageGeo) {
-        const geoLayer = L.geoJSON(drainageGeo, {
-          style: {
-            color: '#06b6d4',
-            weight: 2.5,
-            opacity: 0.75,
-          },
-          onEachFeature: (feature, layer) => {
-            if (feature.properties?.name) {
-              layer.bindTooltip(`🌊 Stormwater: ${feature.properties.name}`, { sticky: true });
-            }
-          },
-        });
-        drainageLayerGroupRef.current.addLayer(geoLayer);
+        if (drainageGeo && mapInstanceRef.current) {
+          const geoLayer = L.geoJSON(drainageGeo, {
+            style: {
+              color: '#06b6d4',
+              weight: 2.5,
+              opacity: 0.75,
+            },
+            onEachFeature: (feature, layer) => {
+              if (feature.properties?.name) {
+                layer.bindTooltip(`🌊 Stormwater: ${feature.properties.name}`, { sticky: true });
+              }
+            },
+          });
+          drainageLayerGroupRef.current.addLayer(geoLayer);
+        }
+      } catch (err) {
+        console.warn('[TrafficMap] Failed to load drainage:', err);
       }
     }
 
     loadDrainage();
   }, [selectedCityId, showDrainage]);
 
-  // 7. Render Detected Red Zones Overlays with Pulsing Halos
+  // 8. Render Detected Red Zones Overlays with Pulsing Halos
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !redZonesLayerGroupRef.current) return;
@@ -390,14 +430,17 @@ export default function TrafficMap({
     }
   }, [redZones, onSelectRedZone]);
 
-  // 8. Render Vector Corridors from TomTom API data
+  // 9. Render Vector Corridors from TomTom API data
   useEffect(() => {
     if (trafficLayerManagerRef.current && trafficData?.segments) {
-      trafficLayerManagerRef.current.renderCorridors(trafficData.segments, selectedSegment);
+      trafficLayerManagerRef.current.renderSegments(
+        trafficData.segments,
+        selectedSegment?.id || selectedSegment
+      );
     }
   }, [trafficData, selectedSegment]);
 
-  // 9. TomTom Flow Tile Layer Toggle
+  // 10. TomTom Flow Tile Layer Toggle
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !tomtomTileLayerRef.current) return;
@@ -410,7 +453,7 @@ export default function TrafficMap({
     }
   }, [showTrafficOverlay]);
 
-  // 10. Fit City & Reset View Triggers
+  // 11. Fit City & Reset View Triggers
   useEffect(() => {
     if (fitTrigger > 0 && mapInstanceRef.current) {
       const city = CITIES[selectedCityId] || CITIES.mumbai;
@@ -421,11 +464,11 @@ export default function TrafficMap({
   useEffect(() => {
     if (resetTrigger > 0 && mapInstanceRef.current) {
       const city = CITIES[selectedCityId] || CITIES.mumbai;
-      mapInstanceRef.current.setView(city.center, city.defaultZoom);
+      mapInstanceRef.current.setView(city.center, city.defaultZoom || 12);
     }
   }, [resetTrigger, selectedCityId]);
 
-  // 11. Focus Coordinates on demand
+  // 12. Focus Coordinates on demand
   useEffect(() => {
     if (focusCoords && mapInstanceRef.current) {
       mapInstanceRef.current.flyTo(focusCoords, 15, {
@@ -440,8 +483,10 @@ export default function TrafficMap({
       style={{
         width: '100%',
         height: '100%',
+        minHeight: '100%',
+        flex: 1,
         position: 'relative',
-        background: '#090d16',
+        background: '#0f172a',
       }}
     />
   );

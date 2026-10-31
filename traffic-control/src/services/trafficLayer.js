@@ -111,6 +111,13 @@ export class TrafficMapLayerManager {
   }
 
   /**
+   * Alias for renderSegments
+   */
+  renderCorridors(segments, selectedSegmentId = null) {
+    return this.renderSegments(segments, selectedSegmentId);
+  }
+
+  /**
    * Remove layers and cleanup listeners
    */
   destroy() {

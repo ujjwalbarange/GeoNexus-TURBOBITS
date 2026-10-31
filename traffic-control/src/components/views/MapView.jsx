@@ -16,6 +16,7 @@ export default function MapView({
   showLegend,
   onToggleLegend,
   onNavigateTo,
+  isActive = true,
 }) {
   // Layer Toggles
   const [showZones, setShowZones] = useState(true);
@@ -50,7 +51,7 @@ export default function MapView({
   };
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ width: '100%', height: '100%', flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden', display: 'flex' }}>
       {/* 1. Leaflet Interactive GIS Map Container */}
       <TrafficMap
         selectedCityId={selectedCityId}
@@ -69,6 +70,7 @@ export default function MapView({
         selectedProviderId={selectedProviderId}
         fitTrigger={fitTrigger}
         resetTrigger={resetTrigger}
+        isActive={isActive}
       />
 
       {/* 2. Floating Layers & Legend Drawer (Collapsible) */}

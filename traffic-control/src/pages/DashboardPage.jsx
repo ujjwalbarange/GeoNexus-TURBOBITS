@@ -137,19 +137,18 @@ export default function DashboardPage() {
 
         {/* ─── 3. Viewport (Renders the active of the 10 navigation views) ─── */}
         <main className="content-viewport">
-          {activeNavId === 'overview' && (
-            <OverviewView
-              selectedCityId={selectedCityId}
-              orchestratorOutput={orchestratorOutput}
-              trafficData={trafficData}
-              onNavigateTo={setActiveNavId}
-              onSelectRedZone={handleInspectRedZoneOnMap}
-              lastRefreshedAt={lastRefreshedAt}
-              isCached={isCached}
-            />
-          )}
-
-          {activeNavId === 'map' && (
+          {/* Persistent Map Viewport — Prevents map re-initialization and black screen flash */}
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              display: activeNavId === 'map' ? 'flex' : 'none',
+              flex: 1,
+              minHeight: 0,
+              minWidth: 0,
+              position: 'relative',
+            }}
+          >
             <MapView
               selectedCityId={selectedCityId}
               trafficData={trafficData}
@@ -162,6 +161,19 @@ export default function DashboardPage() {
               showLegend={showLegend}
               onToggleLegend={() => setShowLegend(!showLegend)}
               onNavigateTo={setActiveNavId}
+              isActive={activeNavId === 'map'}
+            />
+          </div>
+
+          {activeNavId === 'overview' && (
+            <OverviewView
+              selectedCityId={selectedCityId}
+              orchestratorOutput={orchestratorOutput}
+              trafficData={trafficData}
+              onNavigateTo={setActiveNavId}
+              onSelectRedZone={handleInspectRedZoneOnMap}
+              lastRefreshedAt={lastRefreshedAt}
+              isCached={isCached}
             />
           )}
 
