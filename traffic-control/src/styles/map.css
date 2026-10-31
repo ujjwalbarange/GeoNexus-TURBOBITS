@@ -1,0 +1,92 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Leaflet Custom Styling & Dark Ops Map Enhancements
+   ═══════════════════════════════════════════════════════════════════ */
+
+@import "leaflet/dist/leaflet.css";
+
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  background: #070a13 !important;
+  outline: none;
+  font-family: inherit;
+}
+
+/* Custom Zoom Controls Override */
+.leaflet-control-zoom {
+  border: 1px solid var(--border-card) !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+  box-shadow: var(--glass-shadow) !important;
+  background: var(--glass-bg) !important;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+  background: rgba(16, 23, 38, 0.85) !important;
+  color: #fff !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  width: 34px !important;
+  height: 34px !important;
+  line-height: 34px !important;
+  font-size: 16px !important;
+  transition: all 0.15s ease;
+}
+
+.leaflet-control-zoom-in:hover,
+.leaflet-control-zoom-out:hover {
+  background: var(--bg-dark-700) !important;
+  color: var(--accent-sky) !important;
+}
+
+/* Attribution Styling */
+.leaflet-control-attribution {
+  background: rgba(7, 10, 19, 0.8) !important;
+  color: #64748b !important;
+  font-size: 10px !important;
+  padding: 2px 8px !important;
+  border-top-left-radius: 6px;
+  backdrop-filter: blur(4px);
+}
+.leaflet-control-attribution a {
+  color: #94a3b8 !important;
+  text-decoration: none;
+}
+.leaflet-control-attribution a:hover {
+  color: #38bdf8 !important;
+  text-decoration: underline;
+}
+
+/* Dark Traffic Tooltip */
+.traffic-tooltip-dark {
+  background: rgba(11, 15, 25, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+  color: #fff !important;
+  padding: 4px 8px !important;
+}
+
+.traffic-tooltip-dark::before {
+  border-top-color: rgba(11, 15, 25, 0.95) !important;
+}
+
+/* Pulsing Corridor Animation */
+@keyframes traffic-pulse {
+  0% {
+    stroke-opacity: 0.8;
+  }
+  50% {
+    stroke-opacity: 1;
+    stroke-width: 8px;
+  }
+  100% {
+    stroke-opacity: 0.8;
+  }
+}
+
+.traffic-pulse-severe {
+  animation: traffic-pulse 1.5s infinite ease-in-out;
+}
