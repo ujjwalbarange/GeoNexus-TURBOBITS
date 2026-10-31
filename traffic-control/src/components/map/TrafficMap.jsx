@@ -7,17 +7,7 @@ import { MAP_PROVIDERS, DEFAULT_MAP_PROVIDER_ID } from '../../config/mapConfig';
 import { TrafficMapLayerManager } from '../../services/trafficLayer';
 import { trafficApiClient } from '../../services/trafficApi';
 import { rootMapService } from '../../services/rootMapService';
-import MapControls from '../controls/MapControls';
-
-const FACILITY_ICONS = {
-  police: '🚓',
-  traffic_police: '🚦',
-  fire_brigade: '🚒',
-  hospital: '🏥',
-  water_supply: '💧',
-  drainage: '🚰',
-  disaster_mgmt: '🚨',
-};
+import { geoDataService } from '../../services/geoDataService';
 
 export default function TrafficMap({
   selectedCityId,
@@ -28,11 +18,15 @@ export default function TrafficMap({
   focusCoords,
   showFacilities = true,
   showDrainage = true,
-  showZones = false,
+  showZones = true,
   showTrafficOverlay = true,
-  onToggleTrafficOverlay,
   redZones = [],
   onSelectRedZone,
+  onSelectWard,
+  onSelectPolice,
+  selectedProviderId = DEFAULT_MAP_PROVIDER_ID,
+  fitTrigger = 0,
+  resetTrigger = 0,
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -40,38 +34,43 @@ export default function TrafficMap({
   const tomtomTileLayerRef = useRef(null);
   const trafficLayerManagerRef = useRef(null);
 
-  // Root GIS Layer Groups
-  const facilitiesLayerGroupRef = useRef(null);
+  // GIS Layer Groups
+  const wardsLayerGroupRef = useRef(null);
+  const policeLayerGroupRef = useRef(null);
   const drainageLayerGroupRef = useRef(null);
-  const zonesLayerGroupRef = useRef(null);
   const redZonesLayerGroupRef = useRef(null);
-
-  const [selectedProviderId, setSelectedProviderId] = useState(DEFAULT_MAP_PROVIDER_ID);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const currentCity = CITIES[selectedCityId] || CITIES.mumbai;
 
-  // 1. Initialize Map on Mount with OpenStreetMap Default & Strict City MaxBounds
+  // 1. Initialize Leaflet Map on Mount
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
+
+    // Fix Leaflet Default Icon assets
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    });
 
     const initialCity = CITIES[selectedCityId] || CITIES.mumbai;
     const provider = MAP_PROVIDERS.find((p) => p.id === selectedProviderId) || MAP_PROVIDERS[0];
 
-    // Hardware-accelerated canvas map with strict city boundary isolation
+    // Hardware-accelerated canvas Leaflet with strict city bounds isolation
     const map = L.map(mapContainerRef.current, {
       center: initialCity.center,
       zoom: initialCity.defaultZoom,
       minZoom: 10,
       maxZoom: 18,
       maxBounds: initialCity.bounds,
-      maxBoundsViscosity: 1.0, // Strictly lock viewport within city bounds
+      maxBoundsViscosity: 1.0, // Prevents panning outside city
       zoomControl: false,
       preferCanvas: true,
       attributionControl: true,
     });
 
-    // Add Base Tile Layer (OpenStreetMap Default)
+    // Base Tile Layer (Default: OpenStreetMap)
     const baseTileLayer = L.tileLayer(provider.url, {
       subdomains: provider.subdomains || 'abc',
       maxZoom: provider.maxZoom || 19,
@@ -80,13 +79,13 @@ export default function TrafficMap({
 
     baseTileLayerRef.current = baseTileLayer;
 
-    // Add TomTom Live Flow Overlay Tile Layer — bounded STRICTLY to city bounds to save API quota
+    // TomTom Live Flow Overlay Tile Layer — bounded strictly to city bounds
     const tomtomUrl = trafficApiClient.getTrafficTileUrl('relative0');
     if (tomtomUrl) {
       const tomtomTileLayer = L.tileLayer(tomtomUrl, {
         maxZoom: 18,
         opacity: 0.85,
-        bounds: initialCity.bounds, // Prevents loading tiles outside the selected city
+        bounds: initialCity.bounds,
         attribution: '&copy; <a href="https://www.tomtom.com" target="_blank" rel="noreferrer">TomTom</a>',
       });
 
@@ -96,22 +95,22 @@ export default function TrafficMap({
       tomtomTileLayerRef.current = tomtomTileLayer;
     }
 
-    // Initialize Layer Groups
-    facilitiesLayerGroupRef.current = L.layerGroup().addTo(map);
+    // Initialize Layer Groups in proper z-order
+    wardsLayerGroupRef.current = L.layerGroup().addTo(map);
     drainageLayerGroupRef.current = L.layerGroup().addTo(map);
-    zonesLayerGroupRef.current = L.layerGroup().addTo(map);
+    policeLayerGroupRef.current = L.layerGroup().addTo(map);
     redZonesLayerGroupRef.current = L.layerGroup().addTo(map);
 
-    // Initialize Interactive Vector Corridor Manager
+    // Interactive Corridor Vector Layer Manager
     const trafficManager = new TrafficMapLayerManager(map);
     trafficManager.setSelectCallback((seg) => {
-      onSelectSegment(seg);
+      if (onSelectSegment) onSelectSegment(seg);
     });
     trafficLayerManagerRef.current = trafficManager;
 
     mapInstanceRef.current = map;
 
-    // Invalidate size on load & resize
+    // Handle container sizing
     const invalidate = () => map.invalidateSize();
     const timer1 = setTimeout(invalidate, 100);
     const timer2 = setTimeout(invalidate, 400);
@@ -127,28 +126,24 @@ export default function TrafficMap({
     };
   }, []);
 
-  // 2. Smoothly flyTo city when selectedCityId changes + update strict city bounds
+  // 2. City Switching: flyTo city center and update strict boundary bounds
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
     const city = CITIES[selectedCityId] || CITIES.mumbai;
-
-    // Update strict city pan bounds
     map.setMaxBounds(city.bounds);
-
     map.flyTo(city.center, city.defaultZoom, {
       duration: 1.2,
       easeLinearity: 0.25,
     });
 
-    // Update TomTom tile bounds to new city
     if (tomtomTileLayerRef.current) {
       tomtomTileLayerRef.current.options.bounds = city.bounds;
     }
   }, [selectedCityId]);
 
-  // 3. Switch Base Tile Provider
+  // 3. Tile Provider Switching
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !baseTileLayerRef.current) return;
@@ -156,115 +151,167 @@ export default function TrafficMap({
     const provider = MAP_PROVIDERS.find((p) => p.id === selectedProviderId) || MAP_PROVIDERS[0];
     map.removeLayer(baseTileLayerRef.current);
 
-    const newBaseTileLayer = L.tileLayer(provider.url, {
+    const newBase = L.tileLayer(provider.url, {
       subdomains: provider.subdomains || 'abc',
       maxZoom: provider.maxZoom || 19,
       attribution: provider.attribution,
-    });
-
-    newBaseTileLayer.addTo(map);
+    }).addTo(map);
 
     if (tomtomTileLayerRef.current && map.hasLayer(tomtomTileLayerRef.current)) {
       tomtomTileLayerRef.current.bringToFront();
     }
 
-    baseTileLayerRef.current = newBaseTileLayer;
+    baseTileLayerRef.current = newBase;
   }, [selectedProviderId]);
 
-  // 4. Ingest and Render Root Project Map Services
+  // 4. Ingest and Render Authentic Ward / Zonal Boundaries
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map) return;
+    if (!map || !wardsLayerGroupRef.current) return;
 
-    async function loadRootMapServices() {
-      facilitiesLayerGroupRef.current?.clearLayers();
-      drainageLayerGroupRef.current?.clearLayers();
-      zonesLayerGroupRef.current?.clearLayers();
+    wardsLayerGroupRef.current.clearLayers();
 
-      const mapData = await rootMapService.fetchCityMapData(selectedCityId);
+    if (!showZones) return;
 
-      if (showFacilities && mapData.facilities?.length > 0) {
-        mapData.facilities.forEach((fac) => {
-          if (!fac.latitude || !fac.longitude) return;
-          const iconChar = FACILITY_ICONS[fac.departmentType] || '🏢';
+    async function loadBoundaries() {
+      const geojson = await geoDataService.getCityBoundaries(selectedCityId);
+      if (!geojson || !geojson.features) return;
 
-          const markerIcon = L.divIcon({
-            className: 'custom-facility-marker',
-            html: `
-              <div style="
-                width: 26px;
-                height: 26px;
-                border-radius: 8px;
-                background: #0f172a;
-                border: 1.5px solid #38bdf8;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 13px;
-                cursor: pointer;
-              ">${iconChar}</div>
-            `,
-            iconSize: [26, 26],
-            iconAnchor: [13, 13],
-            popupAnchor: [0, -12],
-          });
-
-          const m = L.marker([fac.latitude, fac.longitude], { icon: markerIcon });
-          m.bindPopup(`
-            <div style="font-family: 'Inter', sans-serif; font-size: 12px; color: #0f172a; padding: 4px;">
-              <strong style="font-size: 13px; color: #0284c7;">${fac.name}</strong><br/>
-              <span style="color: #64748b;">${fac.departmentName || fac.departmentType}</span><br/>
-              ${fac.address ? `<div style="margin-top: 4px; font-size: 11px;">${fac.address}</div>` : ''}
-              ${fac.contactNumber ? `<div style="margin-top: 4px; font-weight: 600;">📞 ${fac.contactNumber}</div>` : ''}
-            </div>
-          `);
-          facilitiesLayerGroupRef.current?.addLayer(m);
-        });
-      }
-
-      if (showZones && mapData.zones?.length > 0) {
-        mapData.zones.forEach((z) => {
-          if (!z.polygon || z.polygon.length === 0) return;
-          const latLngs = z.polygon.map(([lng, lat]) => [lat, lng]);
-          const poly = L.polygon(latLngs, {
+      const layer = L.geoJSON(geojson, {
+        style: (feat) => {
+          return {
             color: '#3b82f6',
             weight: 1.5,
             fillColor: '#3b82f6',
             fillOpacity: 0.08,
-            dashArray: '4, 4',
+            opacity: 0.8,
+            dashArray: '3, 4',
+          };
+        },
+        onEachFeature: (feature, l) => {
+          const wardInfo = geoDataService.extractWardInfo(feature, selectedCityId);
+
+          // Tooltip on hover
+          l.bindTooltip(`
+            <div style="font-family: 'Inter', sans-serif; font-size: 11px; padding: 2px;">
+              <strong style="color: #0f172a; font-size: 12px;">${wardInfo.name}</strong><br/>
+              <span style="color: #64748b;">${wardInfo.areaSqKm ? `Area: ${wardInfo.areaSqKm} km²` : 'Municipal Sector'}</span><br/>
+              <span style="color: #2563eb; font-weight: 700;">Click to view Sector Intelligence →</span>
+            </div>
+          `, { sticky: true, className: 'ward-tooltip' });
+
+          // Click to open contextual Ward Drawer
+          l.on('click', (e) => {
+            L.DomEvent.stopPropagation(e);
+            if (onSelectWard) onSelectWard(wardInfo);
           });
-          poly.bindTooltip(z.zoneName || `Zone ${z.zoneNumber}`, { sticky: true });
-          zonesLayerGroupRef.current?.addLayer(poly);
+        },
+      });
+
+      wardsLayerGroupRef.current.addLayer(layer);
+    }
+
+    loadBoundaries();
+  }, [selectedCityId, showZones, onSelectWard]);
+
+  // 5. Ingest and Render Verified Police Posts
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !policeLayerGroupRef.current) return;
+
+    policeLayerGroupRef.current.clearLayers();
+
+    if (!showFacilities) return;
+
+    async function loadPolice() {
+      const geojson = await geoDataService.getCityPoliceUnits(selectedCityId);
+      if (!geojson || !geojson.features) return;
+
+      geojson.features.forEach((feat) => {
+        const coords = feat.geometry?.coordinates;
+        if (!coords || coords.length < 2) return;
+        const [lon, lat] = coords;
+
+        const p = feat.properties || {};
+        const stationName = p.name || p.NAME || p.station_name || 'Traffic Police Post';
+
+        const policeIcon = L.divIcon({
+          className: 'custom-police-marker',
+          html: `
+            <div style="
+              width: 28px;
+              height: 28px;
+              border-radius: 8px;
+              background: #0f172a;
+              border: 1.5px solid #3b82f6;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 14px;
+              cursor: pointer;
+            ">🚓</div>
+          `,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+          popupAnchor: [0, -14],
         });
-      }
 
-      if (showDrainage) {
-        const layersData = await rootMapService.fetchCityLayers(selectedCityId, ['drainage', 'waterways']);
-        const drainageGeo = layersData.layers?.drainage || layersData.layers?.waterways;
+        const marker = L.marker([lat, lon], { icon: policeIcon });
 
-        if (drainageGeo) {
-          const geoLayer = L.geoJSON(drainageGeo, {
-            style: {
-              color: '#06b6d4',
-              weight: 2.5,
-              opacity: 0.7,
-            },
-            onEachFeature: (feature, layer) => {
-              if (feature.properties?.name) {
-                layer.bindTooltip(`Stormwater: ${feature.properties.name}`, { sticky: true });
-              }
-            },
-          });
-          drainageLayerGroupRef.current?.addLayer(geoLayer);
-        }
+        marker.bindPopup(`
+          <div style="font-family: 'Inter', sans-serif; font-size: 12px; color: #0f172a; padding: 4px; max-width: 220px;">
+            <strong style="color: #2563eb; font-size: 13px;">🚓 ${stationName}</strong>
+            <div style="color: #64748b; margin-top: 2px;">Metropolitan Police Traffic Division</div>
+            <div style="color: #10b981; font-weight: 700; margin-top: 4px;">● VERIFIED ON-DUTY POST</div>
+          </div>
+        `);
+
+        marker.on('click', () => {
+          if (onSelectPolice) onSelectPolice({ name: stationName, latitude: lat, longitude: lon, properties: p });
+        });
+
+        policeLayerGroupRef.current.addLayer(marker);
+      });
+    }
+
+    loadPolice();
+  }, [selectedCityId, showFacilities, onSelectPolice]);
+
+  // 6. Ingest and Render Drainage Corridors (Root Map Service Integration)
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !drainageLayerGroupRef.current) return;
+
+    drainageLayerGroupRef.current.clearLayers();
+
+    if (!showDrainage) return;
+
+    async function loadDrainage() {
+      const layersData = await rootMapService.fetchCityLayers(selectedCityId, ['drainage', 'waterways']);
+      const drainageGeo = layersData.layers?.drainage || layersData.layers?.waterways;
+
+      if (drainageGeo) {
+        const geoLayer = L.geoJSON(drainageGeo, {
+          style: {
+            color: '#06b6d4',
+            weight: 2.5,
+            opacity: 0.75,
+          },
+          onEachFeature: (feature, layer) => {
+            if (feature.properties?.name) {
+              layer.bindTooltip(`🌊 Stormwater: ${feature.properties.name}`, { sticky: true });
+            }
+          },
+        });
+        drainageLayerGroupRef.current.addLayer(geoLayer);
       }
     }
 
-    loadRootMapServices();
-  }, [selectedCityId, showFacilities, showDrainage, showZones]);
+    loadDrainage();
+  }, [selectedCityId, showDrainage]);
 
-  // 5. Render Detected Red Zones Overlays
+  // 7. Render Detected Red Zones Overlays with Pulsing Halos
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !redZonesLayerGroupRef.current) return;
@@ -278,13 +325,13 @@ export default function TrafficMap({
         // Visual pulsing halo polyline
         const halo = L.polyline(rz.coordinates, {
           color: rz.color || '#ef4444',
-          weight: 14,
+          weight: 16,
           opacity: 0.35,
           lineCap: 'round',
           interactive: false,
         });
 
-        // Interactive red zone line
+        // Core interactive red zone line
         const rzLine = L.polyline(rz.coordinates, {
           color: rz.color || '#ef4444',
           weight: 7,
@@ -296,101 +343,106 @@ export default function TrafficMap({
           <div style="font-family: 'Inter', sans-serif; font-size: 12px; color: #fff;">
             <div style="font-weight: 700; color: #ef4444;">🚨 RED ZONE: ${rz.corridorName}</div>
             <div style="font-size: 11px; color: #f8fafc;">Delay: +${rz.delayMinutes} mins · ${rz.currentSpeedKmH || 15} km/h</div>
+            <div style="font-size: 10px; color: #38bdf8; font-weight: 600;">Click to open Tactical Action Plan →</div>
           </div>
         `, { sticky: true, className: 'traffic-tooltip-dark' });
 
-        rzLine.on('click', () => {
+        rzLine.on('click', (e) => {
+          L.DomEvent.stopPropagation(e);
+          if (onSelectRedZone) onSelectRedZone(rz);
+        });
+
+        // Add start marker
+        const startPoint = rz.coordinates[0];
+        const icon = L.divIcon({
+          className: 'rz-start-marker',
+          html: `
+            <div style="
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              background: #dc2626;
+              border: 2px solid #ffffff;
+              box-shadow: 0 0 12px #dc2626;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 11px;
+              color: #fff;
+              font-weight: bold;
+              cursor: pointer;
+            ">🚨</div>
+          `,
+          iconSize: [24, 24],
+          iconAnchor: [12, 12],
+        });
+
+        const startMarker = L.marker(startPoint, { icon });
+        startMarker.on('click', (e) => {
+          L.DomEvent.stopPropagation(e);
           if (onSelectRedZone) onSelectRedZone(rz);
         });
 
         redZonesLayerGroupRef.current.addLayer(halo);
         redZonesLayerGroupRef.current.addLayer(rzLine);
+        redZonesLayerGroupRef.current.addLayer(startMarker);
       });
     }
   }, [redZones, onSelectRedZone]);
 
-  // 6. Toggle TomTom Flow Tile Layer + Vector Layers
+  // 8. Render Vector Corridors from TomTom API data
+  useEffect(() => {
+    if (trafficLayerManagerRef.current && trafficData?.segments) {
+      trafficLayerManagerRef.current.renderCorridors(trafficData.segments, selectedSegment);
+    }
+  }, [trafficData, selectedSegment]);
+
+  // 9. TomTom Flow Tile Layer Toggle
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map) return;
+    if (!map || !tomtomTileLayerRef.current) return;
 
-    if (tomtomTileLayerRef.current) {
-      if (showTrafficOverlay && !map.hasLayer(tomtomTileLayerRef.current)) {
-        map.addLayer(tomtomTileLayerRef.current);
-        tomtomTileLayerRef.current.bringToFront();
-      } else if (!showTrafficOverlay && map.hasLayer(tomtomTileLayerRef.current)) {
-        map.removeLayer(tomtomTileLayerRef.current);
-      }
+    if (showTrafficOverlay && !map.hasLayer(tomtomTileLayerRef.current)) {
+      map.addLayer(tomtomTileLayerRef.current);
+      tomtomTileLayerRef.current.bringToFront();
+    } else if (!showTrafficOverlay && map.hasLayer(tomtomTileLayerRef.current)) {
+      map.removeLayer(tomtomTileLayerRef.current);
     }
+  }, [showTrafficOverlay]);
 
-    const manager = trafficLayerManagerRef.current;
-    if (!manager) return;
-
-    if (!showTrafficOverlay) {
-      manager.clear();
-      return;
-    }
-
-    const segments = trafficData?.segments || [];
-    manager.renderSegments(segments, selectedSegment?.id || null);
-  }, [trafficData, showTrafficOverlay, selectedSegment]);
-
-  // 7. External Focus Trigger
+  // 10. Fit City & Reset View Triggers
   useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
+    if (fitTrigger > 0 && mapInstanceRef.current) {
+      const city = CITIES[selectedCityId] || CITIES.mumbai;
+      mapInstanceRef.current.fitBounds(city.bounds, { padding: [20, 20], maxZoom: 14 });
+    }
+  }, [fitTrigger, selectedCityId]);
 
-    if (focusCoords && focusCoords.length === 2) {
-      map.flyTo(focusCoords, 14, { duration: 1.0 });
-    } else if (selectedSegment && selectedSegment.coordinates?.length > 0 && focusTrigger) {
-      const bounds = L.latLngBounds(selectedSegment.coordinates);
-      map.flyToBounds(bounds, {
-        padding: [80, 80],
-        maxZoom: 15,
+  useEffect(() => {
+    if (resetTrigger > 0 && mapInstanceRef.current) {
+      const city = CITIES[selectedCityId] || CITIES.mumbai;
+      mapInstanceRef.current.setView(city.center, city.defaultZoom);
+    }
+  }, [resetTrigger, selectedCityId]);
+
+  // 11. Focus Coordinates on demand
+  useEffect(() => {
+    if (focusCoords && mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo(focusCoords, 15, {
         duration: 1.0,
       });
     }
-  }, [focusTrigger, focusCoords, selectedSegment]);
-
-  // Controls
-  const handleZoomIn = () => mapInstanceRef.current?.zoomIn();
-  const handleZoomOut = () => mapInstanceRef.current?.zoomOut();
-
-  const handleResetView = () => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-    map.flyTo(currentCity.center, currentCity.defaultZoom, { duration: 1.0 });
-    onSelectSegment(null);
-  };
-
-  const handleToggleFullscreen = () => {
-    const elem = mapContainerRef.current?.parentElement;
-    if (!elem) return;
-
-    if (!document.fullscreenElement) {
-      elem.requestFullscreen?.().catch(() => {});
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen?.().catch(() => {});
-      setIsFullscreen(false);
-    }
-  };
+  }, [focusTrigger, focusCoords]);
 
   return (
-    <div className="map-canvas-container" style={{ width: '100%', height: '100%', position: 'relative' }}>
-      <MapControls
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onResetView={handleResetView}
-        showTrafficOverlay={showTrafficOverlay}
-        onToggleTrafficOverlay={onToggleTrafficOverlay}
-        selectedProviderId={selectedProviderId}
-        onSelectProvider={setSelectedProviderId}
-        onToggleFullscreen={handleToggleFullscreen}
-        isFullscreen={isFullscreen}
-      />
-
-      <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />
-    </div>
+    <div
+      ref={mapContainerRef}
+      style={{
+        width: '100%',
+        height: '100%',
+        position: 'relative',
+        background: '#090d16',
+      }}
+    />
   );
 }

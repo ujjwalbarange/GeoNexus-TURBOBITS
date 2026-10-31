@@ -1,32 +1,47 @@
 import React, { useState, useMemo } from 'react';
-import Header from '../components/layout/Header';
-import TopCommandBar from '../components/controls/TopCommandBar';
-import TrafficMap from '../components/map/TrafficMap';
-import AgentControlCenter from '../components/agent/AgentControlCenter';
+import Sidebar from '../components/layout/Sidebar';
+import TopBar from '../components/layout/TopBar';
+import TelemetryRibbon from '../components/layout/TelemetryRibbon';
+
+// 10 Dedicated View Components
+import OverviewView from '../components/views/OverviewView';
+import MapView from '../components/views/MapView';
+import RedZonesView from '../components/views/RedZonesView';
+import PoliceDispatchView from '../components/views/PoliceDispatchView';
+import TrafficIntelligenceView from '../components/views/TrafficIntelligenceView';
+import RouteOptimizationView from '../components/views/RouteOptimizationView';
+import InfrastructureView from '../components/views/InfrastructureView';
+import GovernmentReportsView from '../components/views/GovernmentReportsView';
+import AgentActivityView from '../components/views/AgentActivityView';
+import SettingsView from '../components/views/SettingsView';
+
 import { useTrafficData } from '../hooks/useTrafficData';
 import { TrafficControlOrchestrator } from '../agents/orchestrator/trafficOrchestrator';
 import { DEFAULT_CITY } from '../config/cities';
+import { DEFAULT_MAP_PROVIDER_ID } from '../config/mapConfig';
 
 export default function DashboardPage() {
   const [selectedCityId, setSelectedCityId] = useState(
     import.meta.env.VITE_DEFAULT_CITY || DEFAULT_CITY
   );
 
-  // Active Agent Module View ('red_zones', 'police_dispatch', 'patterns', 'routing', 'infrastructure', 'reports', or null)
-  const [activeModuleTab, setActiveModuleTab] = useState('red_zones');
+  // Active Navigation View ('overview', 'map', 'red_zones', 'police_dispatch', 'patterns', 'routing', 'infrastructure', 'reports', 'agent_activity', 'settings')
+  const [activeNavId, setActiveNavId] = useState('overview');
 
-  // Selected corridor / segment
-  const [selectedSegment, setSelectedSegment] = useState(null);
-  const [focusTrigger, setFocusTrigger] = useState(0);
+  // Map Controls State
+  const [viewMode, setViewMode] = useState('2D');
+  const [selectedProviderId, setSelectedProviderId] = useState(DEFAULT_MAP_PROVIDER_ID);
+  const [fitTrigger, setFitTrigger] = useState(0);
+  const [resetTrigger, setResetTrigger] = useState(0);
   const [focusCoords, setFocusCoords] = useState(null);
+  const [focusTrigger, setFocusTrigger] = useState(0);
+  const [showLegend, setShowLegend] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // GIS Infrastructure Layer Toggles
-  const [showFacilities, setShowFacilities] = useState(true);
-  const [showDrainage, setShowDrainage] = useState(true);
-  const [showZones, setShowZones] = useState(false);
-  const [showTrafficOverlay, setShowTrafficOverlay] = useState(true);
+  // Selected red zone from anywhere in the app
+  const [activeRedZone, setActiveRedZone] = useState(null);
 
-  // Strict Cache-First Traffic Hook (zero polling, explicit refresh only)
+  // Strict Cache-First Traffic Hook (zero background polling loops; explicit refresh only)
   const {
     trafficData,
     loading,
@@ -36,82 +51,179 @@ export default function DashboardPage() {
     refresh,
   } = useTrafficData(selectedCityId);
 
-  // Run Central Multi-Module Agent Orchestrator Pipeline
+  // Central Multi-Module Agent Orchestrator Pipeline
   const orchestratorOutput = useMemo(() => {
     return TrafficControlOrchestrator.runAnalysis(trafficData, selectedCityId);
   }, [trafficData, selectedCityId]);
 
   const handleSelectCity = (newCityId) => {
     setSelectedCityId(newCityId);
-    setSelectedSegment(null);
     setFocusCoords(null);
   };
 
-  const handleFocusCoordinates = (coords) => {
-    setFocusCoords(coords);
-    setFocusTrigger((prev) => prev + 1);
+  const handleFitCity = () => {
+    setFitTrigger((prev) => prev + 1);
   };
 
-  const handleSelectRedZone = (redZone) => {
-    setActiveModuleTab('red_zones');
-    handleFocusCoordinates(redZone.centerCoordinates);
+  const handleResetView = () => {
+    setResetTrigger((prev) => prev + 1);
+  };
+
+  const handleSelectSearchResult = (result) => {
+    if (result.coords) {
+      setFocusCoords(result.coords);
+      setFocusTrigger((prev) => prev + 1);
+      setActiveNavId('map');
+    }
+  };
+
+  const handleInspectRedZoneOnMap = (rz) => {
+    setActiveRedZone(rz);
+    if (rz.centerCoordinates) {
+      setFocusCoords(rz.centerCoordinates);
+      setFocusTrigger((prev) => prev + 1);
+    }
+    setActiveNavId('map');
   };
 
   return (
-    <div className="app-container" style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', overflow: 'hidden' }}>
-      {/* ─── 1. TOP SECTION: Mission Header, City Selector, Explicit Refresh & Cache Badge ─── */}
-      <Header
+    <div className="app-shell">
+      {/* ─── 1. Desktop Persistent Sidebar (250px) / Mobile Drawer ─── */}
+      <Sidebar
+        activeNavId={activeNavId}
+        onSelectNav={setActiveNavId}
         selectedCityId={selectedCityId}
         onSelectCity={handleSelectCity}
-        trafficData={trafficData}
-        lastRefreshedAt={lastRefreshedAt}
-        loading={loading}
-        isCached={isCached}
-        onRefresh={refresh}
-      />
-
-      {/* ─── 2. TOP SECTION: Agent Command Bar, Module Switcher, KPIs & GIS Layer Toggles ─── */}
-      <TopCommandBar
-        selectedCityId={selectedCityId}
-        activeModuleTab={activeModuleTab}
-        onSelectModuleTab={(tabId) => setActiveModuleTab(activeModuleTab === tabId ? null : tabId)}
         orchestratorOutput={orchestratorOutput}
-        showFacilities={showFacilities}
-        onToggleFacilities={() => setShowFacilities(!showFacilities)}
-        showDrainage={showDrainage}
-        onToggleDrainage={() => setShowDrainage(!showDrainage)}
-        showZones={showZones}
-        onToggleZones={() => setShowZones(!showZones)}
-        showTrafficOverlay={showTrafficOverlay}
-        onToggleTrafficOverlay={() => setShowTrafficOverlay(!showTrafficOverlay)}
+        lastRefreshedAt={lastRefreshedAt}
+        isCached={isCached}
+        isOpenMobile={isMobileMenuOpen}
+        onCloseMobile={() => setIsMobileMenuOpen(false)}
       />
 
-      {/* ─── 3. BOTTOM SECTION: Interactive Traffic Map (Limited strictly to city bounds) ─── */}
-      <main className="dashboard-body" style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-        <TrafficMap
+      {/* ─── 2. Main Application Shell ─── */}
+      <div className="main-wrapper">
+        {/* Top Control Bar with Search, 2D/3D switcher, Fit City, Reset, and Manual Refresh */}
+        <TopBar
           selectedCityId={selectedCityId}
-          trafficData={trafficData}
-          selectedSegment={selectedSegment}
-          onSelectSegment={setSelectedSegment}
-          focusTrigger={focusTrigger}
-          focusCoords={focusCoords}
-          showFacilities={showFacilities}
-          showDrainage={showDrainage}
-          showZones={showZones}
-          showTrafficOverlay={showTrafficOverlay}
-          onToggleTrafficOverlay={() => setShowTrafficOverlay(!showTrafficOverlay)}
+          activeNavId={activeNavId}
+          viewMode={viewMode}
+          onChangeViewMode={setViewMode}
+          selectedProviderId={selectedProviderId}
+          onSelectProviderId={setSelectedProviderId}
+          onFitCity={handleFitCity}
+          onResetView={handleResetView}
+          showLegend={showLegend}
+          onToggleLegend={() => setShowLegend(!showLegend)}
+          onRefresh={refresh}
+          loading={loading}
+          isCached={isCached}
+          lastRefreshedAt={lastRefreshedAt}
+          onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+          onSelectSearchResult={handleSelectSearchResult}
           redZones={orchestratorOutput?.detection?.redZones || []}
-          onSelectRedZone={handleSelectRedZone}
+          policeUnits={orchestratorOutput?.policeDispatch?.recommendations || []}
+          corridors={trafficData?.segments || []}
         />
 
-        {/* Floating Agent Intelligence Drawer (opens over map when a module tab is selected) */}
-        <AgentControlCenter
-          activeTab={activeModuleTab}
-          onClose={() => setActiveModuleTab(null)}
+        {/* Telemetry Ribbon with KPIs, delays, and agent status */}
+        <TelemetryRibbon
           orchestratorOutput={orchestratorOutput}
-          onFocusCoordinates={handleFocusCoordinates}
+          trafficData={trafficData}
+          isCached={isCached}
+          lastRefreshedAt={lastRefreshedAt}
+          agentStatus={loading ? 'FETCHING_DATA' : 'ONLINE'}
         />
-      </main>
+
+        {/* ─── 3. Viewport (Renders the active of the 10 navigation views) ─── */}
+        <main className="content-viewport">
+          {activeNavId === 'overview' && (
+            <OverviewView
+              selectedCityId={selectedCityId}
+              orchestratorOutput={orchestratorOutput}
+              trafficData={trafficData}
+              onNavigateTo={setActiveNavId}
+              onSelectRedZone={handleInspectRedZoneOnMap}
+              lastRefreshedAt={lastRefreshedAt}
+              isCached={isCached}
+            />
+          )}
+
+          {activeNavId === 'map' && (
+            <MapView
+              selectedCityId={selectedCityId}
+              trafficData={trafficData}
+              orchestratorOutput={orchestratorOutput}
+              selectedProviderId={selectedProviderId}
+              fitTrigger={fitTrigger}
+              resetTrigger={resetTrigger}
+              focusCoords={focusCoords}
+              focusTrigger={focusTrigger}
+              showLegend={showLegend}
+              onToggleLegend={() => setShowLegend(!showLegend)}
+              onNavigateTo={setActiveNavId}
+            />
+          )}
+
+          {activeNavId === 'red_zones' && (
+            <RedZonesView
+              orchestratorOutput={orchestratorOutput}
+              onSelectRedZone={handleInspectRedZoneOnMap}
+              onNavigateToMap={() => setActiveNavId('map')}
+            />
+          )}
+
+          {activeNavId === 'police_dispatch' && (
+            <PoliceDispatchView
+              orchestratorOutput={orchestratorOutput}
+              onNavigateToMap={() => setActiveNavId('map')}
+            />
+          )}
+
+          {activeNavId === 'patterns' && (
+            <TrafficIntelligenceView
+              selectedCityId={selectedCityId}
+              orchestratorOutput={orchestratorOutput}
+            />
+          )}
+
+          {activeNavId === 'routing' && (
+            <RouteOptimizationView
+              selectedCityId={selectedCityId}
+              orchestratorOutput={orchestratorOutput}
+              onNavigateToMap={() => setActiveNavId('map')}
+            />
+          )}
+
+          {activeNavId === 'infrastructure' && (
+            <InfrastructureView
+              selectedCityId={selectedCityId}
+              onNavigateToMap={() => setActiveNavId('map')}
+            />
+          )}
+
+          {activeNavId === 'reports' && (
+            <GovernmentReportsView
+              selectedCityId={selectedCityId}
+              orchestratorOutput={orchestratorOutput}
+            />
+          )}
+
+          {activeNavId === 'agent_activity' && (
+            <AgentActivityView
+              selectedCityId={selectedCityId}
+              orchestratorOutput={orchestratorOutput}
+            />
+          )}
+
+          {activeNavId === 'settings' && (
+            <SettingsView
+              selectedCityId={selectedCityId}
+              onSelectCity={handleSelectCity}
+            />
+          )}
+        </main>
+      </div>
     </div>
   );
 }
