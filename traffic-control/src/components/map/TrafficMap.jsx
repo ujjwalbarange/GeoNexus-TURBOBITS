@@ -125,12 +125,19 @@ export default function TrafficMap({
     window.addEventListener('resize', invalidate);
 
     return () => {
+      window.removeEventListener('resize', invalidate);
       clearTimeout(timer1);
       clearTimeout(timer2);
       clearTimeout(timer3);
-      window.removeEventListener('resize', invalidate);
-      trafficManager.destroy();
-      map.remove();
+      try {
+        if (trafficManager) trafficManager.destroy();
+        if (map) map.remove();
+      } catch (e) {
+        console.warn('[TrafficMap] map removal warning:', e);
+      }
+      if (mapContainerRef.current) {
+        delete mapContainerRef.current._leaflet_id;
+      }
       mapInstanceRef.current = null;
     };
   }, []);

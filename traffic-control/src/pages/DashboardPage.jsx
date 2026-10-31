@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import Sidebar from '../components/layout/Sidebar';
 import TopBar from '../components/layout/TopBar';
 import TelemetryRibbon from '../components/layout/TelemetryRibbon';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 
 // 10 Dedicated View Components
 import OverviewView from '../components/views/OverviewView';
@@ -137,102 +138,110 @@ export default function DashboardPage() {
 
         {/* ─── 3. Viewport (Renders the active of the 10 navigation views) ─── */}
         <main className="content-viewport">
-          {/* Persistent Map Viewport — Prevents map re-initialization and black screen flash */}
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              display: activeNavId === 'map' ? 'flex' : 'none',
-              flex: 1,
-              minHeight: 0,
-              minWidth: 0,
-              position: 'relative',
-            }}
-          >
-            <MapView
-              selectedCityId={selectedCityId}
-              trafficData={trafficData}
-              orchestratorOutput={orchestratorOutput}
-              selectedProviderId={selectedProviderId}
-              fitTrigger={fitTrigger}
-              resetTrigger={resetTrigger}
-              focusCoords={focusCoords}
-              focusTrigger={focusTrigger}
-              showLegend={showLegend}
-              onToggleLegend={() => setShowLegend(!showLegend)}
-              onNavigateTo={setActiveNavId}
-              isActive={activeNavId === 'map'}
-            />
-          </div>
-
           {activeNavId === 'overview' && (
-            <OverviewView
-              selectedCityId={selectedCityId}
-              orchestratorOutput={orchestratorOutput}
-              trafficData={trafficData}
-              onNavigateTo={setActiveNavId}
-              onSelectRedZone={handleInspectRedZoneOnMap}
-              lastRefreshedAt={lastRefreshedAt}
-              isCached={isCached}
-            />
+            <ErrorBoundary fallbackTitle="Overview Dashboard Unavailable">
+              <OverviewView
+                selectedCityId={selectedCityId}
+                orchestratorOutput={orchestratorOutput}
+                trafficData={trafficData}
+                onNavigateTo={setActiveNavId}
+                onSelectRedZone={handleInspectRedZoneOnMap}
+                lastRefreshedAt={lastRefreshedAt}
+                isCached={isCached}
+              />
+            </ErrorBoundary>
+          )}
+
+          {activeNavId === 'map' && (
+            <ErrorBoundary fallbackTitle="Live Traffic Map Unavailable">
+              <MapView
+                selectedCityId={selectedCityId}
+                trafficData={trafficData}
+                orchestratorOutput={orchestratorOutput}
+                selectedProviderId={selectedProviderId}
+                fitTrigger={fitTrigger}
+                resetTrigger={resetTrigger}
+                focusCoords={focusCoords}
+                focusTrigger={focusTrigger}
+                showLegend={showLegend}
+                onToggleLegend={() => setShowLegend(!showLegend)}
+                onNavigateTo={setActiveNavId}
+              />
+            </ErrorBoundary>
           )}
 
           {activeNavId === 'red_zones' && (
-            <RedZonesView
-              orchestratorOutput={orchestratorOutput}
-              onSelectRedZone={handleInspectRedZoneOnMap}
-              onNavigateToMap={() => setActiveNavId('map')}
-            />
+            <ErrorBoundary fallbackTitle="Red Zone Detection Unavailable">
+              <RedZonesView
+                orchestratorOutput={orchestratorOutput}
+                onSelectRedZone={handleInspectRedZoneOnMap}
+                onNavigateToMap={() => setActiveNavId('map')}
+              />
+            </ErrorBoundary>
           )}
 
           {activeNavId === 'police_dispatch' && (
-            <PoliceDispatchView
-              orchestratorOutput={orchestratorOutput}
-              onNavigateToMap={() => setActiveNavId('map')}
-            />
+            <ErrorBoundary fallbackTitle="Police Dispatch Command Unavailable">
+              <PoliceDispatchView
+                orchestratorOutput={orchestratorOutput}
+                onNavigateToMap={() => setActiveNavId('map')}
+              />
+            </ErrorBoundary>
           )}
 
           {activeNavId === 'patterns' && (
-            <TrafficIntelligenceView
-              selectedCityId={selectedCityId}
-              orchestratorOutput={orchestratorOutput}
-            />
+            <ErrorBoundary fallbackTitle="Traffic Intelligence Engine Unavailable">
+              <TrafficIntelligenceView
+                selectedCityId={selectedCityId}
+                orchestratorOutput={orchestratorOutput}
+              />
+            </ErrorBoundary>
           )}
 
           {activeNavId === 'routing' && (
-            <RouteOptimizationView
-              selectedCityId={selectedCityId}
-              orchestratorOutput={orchestratorOutput}
-              onNavigateToMap={() => setActiveNavId('map')}
-            />
+            <ErrorBoundary fallbackTitle="Route Optimization Engine Unavailable">
+              <RouteOptimizationView
+                selectedCityId={selectedCityId}
+                orchestratorOutput={orchestratorOutput}
+                onNavigateToMap={() => setActiveNavId('map')}
+              />
+            </ErrorBoundary>
           )}
 
           {activeNavId === 'infrastructure' && (
-            <InfrastructureView
-              selectedCityId={selectedCityId}
-              onNavigateToMap={() => setActiveNavId('map')}
-            />
+            <ErrorBoundary fallbackTitle="Infrastructure Intelligence Unavailable">
+              <InfrastructureView
+                selectedCityId={selectedCityId}
+                onNavigateToMap={() => setActiveNavId('map')}
+              />
+            </ErrorBoundary>
           )}
 
           {activeNavId === 'reports' && (
-            <GovernmentReportsView
-              selectedCityId={selectedCityId}
-              orchestratorOutput={orchestratorOutput}
-            />
+            <ErrorBoundary fallbackTitle="Government Reporting System Unavailable">
+              <GovernmentReportsView
+                selectedCityId={selectedCityId}
+                orchestratorOutput={orchestratorOutput}
+              />
+            </ErrorBoundary>
           )}
 
           {activeNavId === 'agent_activity' && (
-            <AgentActivityView
-              selectedCityId={selectedCityId}
-              orchestratorOutput={orchestratorOutput}
-            />
+            <ErrorBoundary fallbackTitle="Agent Activity Monitor Unavailable">
+              <AgentActivityView
+                selectedCityId={selectedCityId}
+                orchestratorOutput={orchestratorOutput}
+              />
+            </ErrorBoundary>
           )}
 
           {activeNavId === 'settings' && (
-            <SettingsView
-              selectedCityId={selectedCityId}
-              onSelectCity={handleSelectCity}
-            />
+            <ErrorBoundary fallbackTitle="Settings & Configuration Unavailable">
+              <SettingsView
+                selectedCityId={selectedCityId}
+                onSelectCity={handleSelectCity}
+              />
+            </ErrorBoundary>
           )}
         </main>
       </div>
