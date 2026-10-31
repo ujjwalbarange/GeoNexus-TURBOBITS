@@ -7,7 +7,7 @@
  * - Never executes an unverified dispatch without human operator approval.
  */
 
-import { policeStore } from '../../services/policeStore';
+import { policeStore } from '../../services/policeStore.js';
 
 export class PoliceDispatchAgent {
   /**

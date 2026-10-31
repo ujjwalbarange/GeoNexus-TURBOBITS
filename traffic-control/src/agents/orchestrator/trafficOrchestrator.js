@@ -9,12 +9,12 @@
  * - Module 6: Government Reporting & Recommendation System
  */
 
-import { RedZoneDetector } from '../traffic-detection/redZoneDetector';
-import { PoliceDispatchAgent } from '../police-dispatch/policeDispatchAgent';
-import { PatternIntelligenceAgent } from '../pattern-intelligence/patternIntelligenceAgent';
-import { RouteOptimizationAgent } from '../route-optimization/routeOptimizationAgent';
-import { InfrastructureAgent } from '../infrastructure-intelligence/infrastructureAgent';
-import { GovernmentReportingAgent } from '../government-reporting/governmentReportingAgent';
+import { RedZoneDetector } from '../traffic-detection/redZoneDetector.js';
+import { PoliceDispatchAgent } from '../police-dispatch/policeDispatchAgent.js';
+import { PatternIntelligenceAgent } from '../pattern-intelligence/patternIntelligenceAgent.js';
+import { RouteOptimizationAgent } from '../route-optimization/routeOptimizationAgent.js';
+import { InfrastructureAgent } from '../infrastructure-intelligence/infrastructureAgent.js';
+import { GovernmentReportingAgent } from '../government-reporting/governmentReportingAgent.js';
 
 export class TrafficControlOrchestrator {
   /**

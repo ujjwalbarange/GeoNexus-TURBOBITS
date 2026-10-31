@@ -283,12 +283,24 @@ class TrafficStore {
   }
 
   /**
+   * Ingest live observations array or full payload from TomTom API / useTrafficData hook
+   */
+  ingestLiveObservations(cityId, segmentsOrPayload) {
+    if (!cityId) return;
+    const payload = Array.isArray(segmentsOrPayload)
+      ? { segments: segmentsOrPayload, isLiveFeed: true }
+      : (segmentsOrPayload && segmentsOrPayload.segments ? segmentsOrPayload : { segments: [], isLiveFeed: true });
+
+    this.liveData[cityId] = payload;
+    TrafficCacheManager.set(cityId, payload);
+    eventBus.publish(EVENT_TYPES.TRAFFIC_OBSERVATION_UPDATED, { cityId }, 'LIVE');
+  }
+
+  /**
    * Set live data received from TomTom API or root cache
    */
   setLiveData(cityId, data) {
-    this.liveData[cityId] = data;
-    TrafficCacheManager.set(cityId, data);
-    eventBus.publish(EVENT_TYPES.TRAFFIC_OBSERVATION_UPDATED, { cityId }, 'LIVE');
+    this.ingestLiveObservations(cityId, data);
   }
 
   /**

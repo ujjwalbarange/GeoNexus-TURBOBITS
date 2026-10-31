@@ -212,6 +212,43 @@ const pdfArrayBuffer = pdfDoc.output('arraybuffer');
 assert(pdfArrayBuffer.byteLength > 2000, `PDF output generated valid binary buffer (${pdfArrayBuffer.byteLength} bytes)`);
 
 // ──────────────────────────────────────────────────────────────────
+// TEST 9: Live Observation Ingestion & Full Orchestration Lifecycle
+// ──────────────────────────────────────────────────────────────────
+console.log('\n[MODULE 9] Ingest Live Observations & Multi-Module Orchestrator:');
+const mockLiveSegments = [
+  {
+    id: 'live_seg_test_01',
+    corridorName: 'Outer Ring Road (North Sector)',
+    corridorCode: 'ORR',
+    type: 'Express Highway',
+    coordinates: [[21.1458, 79.0882], [21.1500, 79.0950]],
+    currentSpeedKmH: 8,
+    freeFlowSpeedKmH: 60,
+    speedRatio: 0.13,
+    delaySeconds: 1200,
+    congestionLevel: 'SEVERE',
+    isLive: true,
+  }
+];
+
+// Test ingestLiveObservations function
+assert(typeof trafficStore.ingestLiveObservations === 'function', 'trafficStore.ingestLiveObservations is a registered function');
+trafficStore.ingestLiveObservations('nagpur', mockLiveSegments);
+
+const effectiveAfterIngest = trafficStore.getEffectiveTrafficData('nagpur');
+assert(effectiveAfterIngest.segments.length > 0, `Effective traffic data populated after ingest (${effectiveAfterIngest.segments.length} segments)`);
+
+// Test orchestrator runAnalysis on all 3 cities without throwing
+import('../src/agents/orchestrator/trafficOrchestrator.js').then(({ TrafficControlOrchestrator }) => {
+  ['mumbai', 'nagpur', 'pune'].forEach((city) => {
+    const data = trafficStore.getEffectiveTrafficData(city);
+    const orch = TrafficControlOrchestrator.runAnalysis(data, city);
+    assert(orch != null && orch.highestPriority != null, `Orchestrator analysis completed successfully for ${city.toUpperCase()} (Priority: ${orch.highestPriority})`);
+    assert(orch.infrastructure != null && orch.infrastructure.proposalsCount >= 0, `Infrastructure module integrated in ${city.toUpperCase()}`);
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────
 // TEST SUMMARY
 // ──────────────────────────────────────────────────────────────────
 console.log('\n====================================================');
