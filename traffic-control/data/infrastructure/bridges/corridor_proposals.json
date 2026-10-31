@@ -1,0 +1,83 @@
+[
+  {
+    "id": "prop_mum_01",
+    "cityId": "mumbai",
+    "junctionName": "Saki Naka Metro Junction & Andheri-Ghatkopar Link Rd",
+    "corridorCode": "AGLR",
+    "coordinates": [19.1026, 72.8878],
+    "identifiedBottleneck": "Severe 5-arm surface intersection where East-West traffic conflicts with Metro Line 1 pillars and heavy airport feeder traffic.",
+    "currentCongestionRatio": 0.22,
+    "averageDailyDelayMins": 42,
+    "recommendedInfrastructure": {
+      "typeId": "flyover",
+      "name": "Bifurcated Y-Flyover (Andheri-Kurla Rd to Ghatkopar)",
+      "configuration": "Elevated 2+2 lane flyover passing between Metro 1 viaduct portals with slip arm towards Asalpha.",
+      "potentialAdvantages": "Eliminates 65% of surface cross-traffic waiting time; bypasses Saki Naka signal completely.",
+      "potentialDisadvantages": "Tight clearances around existing elevated Metro Line 1 piers; narrow right-of-way during construction.",
+      "landAcquisitionRequired": "Minimal (within existing municipal road reserve; requires clearing encroachments on service lanes).",
+      "preliminaryCostCategory": "₹140 - ₹180 Crore (Estimated Class-C Capital Project)",
+      "engineeringFeasibilityRequirements": "Structural pier clearance study from Mumbai Metro One (MMOPL), utility mapping for 1800mm water main."
+    },
+    "alternativeOption": {
+      "typeId": "rub",
+      "name": "Vehicular Underpass",
+      "reasonRejected": "Extremely high water table and Mithi River backwater flooding vulnerability during monsoons."
+    },
+    "confidenceScore": 0.88,
+    "status": "PROPOSED_FOR_FEASIBILITY"
+  },
+  {
+    "id": "prop_ngp_01",
+    "cityId": "nagpur",
+    "junctionName": "Sitabuldi Interchange & Variety Square (Amravati-Wardha Rd)",
+    "corridorCode": "SIT_SQ",
+    "coordinates": [21.1465, 79.0830],
+    "identifiedBottleneck": "Heavy confluence of north-south Wardha road traffic with east-west Amravati highway and Nagpur Metro interchange.",
+    "currentCongestionRatio": 0.28,
+    "averageDailyDelayMins": 35,
+    "recommendedInfrastructure": {
+      "typeId": "flyover",
+      "name": "Double-Decker Composite Viaduct Extension",
+      "configuration": "Direct grade-separated vehicular deck integrated with existing Sitabuldi Metro viaduct alignment.",
+      "potentialAdvantages": "Direct signal-free pass from Rahate Colony to Cotton Market without surface choking.",
+      "potentialDisadvantages": "High density heritage market zone limits ramp footprint.",
+      "landAcquisitionRequired": "Partial strip acquisition near Munje Square.",
+      "preliminaryCostCategory": "₹95 - ₹125 Crore",
+      "engineeringFeasibilityRequirements": "Integration analysis with Maha-Metro structural piers, commercial pedestrian circulation study."
+    },
+    "alternativeOption": {
+      "typeId": "pedestrian_overbridge",
+      "name": "Elevated Pedestrian Skywalk Network",
+      "reasonRejected": "Pedestrian bridges help safety but do not resolve the heavy bus and auto-rickshaw vehicular conflict."
+    },
+    "confidenceScore": 0.85,
+    "status": "PROPOSED_FOR_FEASIBILITY"
+  },
+  {
+    "id": "prop_pun_01",
+    "cityId": "pune",
+    "junctionName": "Hinjawadi Phase 1 Shivaji Chowk & Wakad Bridge Junction",
+    "corridorCode": "HIN_SHIV",
+    "coordinates": [18.5940, 73.7420],
+    "identifiedBottleneck": "Critical single-point ingress bottleneck where over 120,000 IT tech commuters bottleneck into Hinjawadi Rajiv Gandhi Infotech Park.",
+    "currentCongestionRatio": 0.18,
+    "averageDailyDelayMins": 58,
+    "recommendedInfrastructure": {
+      "typeId": "grade_separated_interchange",
+      "name": "Multi-Tier Grade Separator & Dedicated IT Corridor Flyover",
+      "configuration": "Continuous 4-lane elevated corridor from Bhumkar Chowk / Wakad over Shivaji Chowk terminating past Phase 1 circle.",
+      "potentialAdvantages": "Direct bypass for Phase 2/3 commuters without encountering Phase 1 local junction signals; eliminates 45 mins queueing.",
+      "potentialDisadvantages": "Requires synchronized construction alongside Pune Metro Line 3 elevated piers.",
+      "landAcquisitionRequired": "MIDC and PMRDA road reserve already acquired; minimal private land impact.",
+      "preliminaryCostCategory": "₹210 - ₹260 Crore",
+      "engineeringFeasibilityRequirements": "Joint geotechnical foundation verification with Pune Metro Line 3 concessionaire (TRIL Urban / Siemens)."
+    },
+    "alternativeOption": {
+      "typeId": "rub",
+      "name": "Underpass under Shivaji Chowk",
+      "reasonRejected": "Underground utilities and storm drainage discharge into Mula River obstructed by rocky basalt substrata."
+    },
+    "confidenceScore": 0.92,
+    "status": "PROPOSED_FOR_FEASIBILITY"
+  }
+]

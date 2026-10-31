@@ -9,37 +9,34 @@ export default function Header({
   trafficData,
   lastRefreshedAt,
   loading,
+  isCached,
   onRefresh,
-  isAutoRefresh,
-  onToggleAutoRefresh,
-  sidebarOpen,
-  onToggleSidebar,
 }) {
   const currentCity = CITIES[selectedCityId] || CITIES.mumbai;
   const isOnline = trafficData?.isLiveFeed && trafficData?.status === 'ONLINE';
 
   return (
-    <header className="top-header">
-      {/* Left: Branding */}
+    <header className="top-header" style={{ height: '60px' }}>
+      {/* Left: Branding & Metro Jurisdiction */}
       <div className="brand-section">
-        <div className="brand-icon-wrapper" title="Traffic Operations Center">
+        <div className="brand-icon-wrapper" title="Autonomous Traffic Operations Center">
           🚦
         </div>
         <div>
           <div className="brand-title">
-            <span>TRAFFIC CONTROL</span>
+            <span>TRAFFIC CONTROL AI</span>
             <span
               style={{
-                fontSize: '0.6875rem',
+                fontSize: '0.625rem',
                 padding: '2px 6px',
                 borderRadius: '4px',
                 background: 'rgba(56, 189, 248, 0.15)',
                 color: '#38bdf8',
                 border: '1px solid rgba(56, 189, 248, 0.3)',
-                fontWeight: 600,
+                fontWeight: 700,
               }}
             >
-              STANDALONE OPS
+              MISSION CONTROL
             </span>
           </div>
           <div className="brand-subtitle">
@@ -48,72 +45,48 @@ export default function Header({
         </div>
       </div>
 
-      {/* Center: City Switcher */}
+      {/* Center: City Switcher (Top of the app) */}
       <div className="header-center">
         <CitySelector selectedCityId={selectedCityId} onSelectCity={onSelectCity} />
       </div>
 
-      {/* Right: Telemetry & Controls */}
+      {/* Right: API Quota Protection & Manual Refresh Button */}
       <div className="header-actions">
-        {/* Status Badge */}
+        {/* Cache / Live State Badge */}
         <div
           className="status-badge"
           style={{
-            borderColor: isOnline ? 'rgba(16, 185, 129, 0.3)' : 'rgba(234, 179, 8, 0.3)',
-            color: isOnline ? '#10b981' : '#facc15',
+            borderColor: isCached ? 'rgba(56, 189, 248, 0.3)' : 'rgba(16, 185, 129, 0.3)',
+            color: isCached ? '#38bdf8' : '#10b981',
+            background: isCached ? 'rgba(56, 189, 248, 0.1)' : 'rgba(16, 185, 129, 0.1)',
           }}
-          title={trafficData?.statusMessage || 'API Telemetry Status'}
+          title={isCached ? 'Loaded from local persistent cache (Zero API usage)' : 'Live data loaded from TomTom'}
         >
-          <span
-            className="status-pulse-dot"
-            style={{
-              backgroundColor: isOnline ? '#10b981' : '#facc15',
-              color: isOnline ? '#10b981' : '#facc15',
-            }}
-          />
-          <span>{isOnline ? 'LIVE FEED ACTIVE' : 'AWAITING TRAFFIC API'}</span>
-        </div>
-
-        {/* Last Updated Timestamp */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-end',
-            fontSize: '0.6875rem',
-            color: 'var(--text-tertiary)',
-            fontFamily: "'JetBrains Mono', monospace",
-          }}
-          title={`Last poll: ${formatTimestamp(lastRefreshedAt)}`}
-        >
-          <span style={{ color: 'var(--text-secondary)' }}>
-            UPDATED: {formatTimeAgo(lastRefreshedAt)}
-          </span>
-          <span style={{ fontSize: '0.625rem' }}>
-            AUTO-POLL: {isAutoRefresh ? '30s' : 'OFF'}
+          <span>{isCached ? '💾 CACHED' : '🟢 LIVE API'}</span>
+          <span style={{ color: 'var(--text-tertiary)', fontSize: '10px' }}>
+            ({formatTimeAgo(lastRefreshedAt)})
           </span>
         </div>
 
-        {/* Refresh Button */}
+        {/* Strict Explicit Refresh Button */}
         <button
-          className="btn btn-icon"
+          className="btn btn-primary"
           onClick={onRefresh}
           disabled={loading}
-          title="Force immediate traffic telemetry refresh"
+          style={{
+            padding: '6px 14px',
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+          title="Click to fetch latest TomTom traffic data. Strictly manual to prevent API quota burn."
         >
           <span style={{ display: 'inline-block', animation: loading ? 'spin 1s linear infinite' : 'none' }}>
             🔄
           </span>
-        </button>
-
-        {/* Sidebar Panel Toggle */}
-        <button
-          className={`btn ${sidebarOpen ? 'btn-primary' : ''}`}
-          onClick={onToggleSidebar}
-          title="Toggle Traffic Operations Panel"
-        >
-          <span>📊</span>
-          <span style={{ display: 'none', minWidth: '60px' }}>Ops Panel</span>
+          <span>{loading ? 'Calling TomTom API...' : 'Refresh Traffic Data'}</span>
         </button>
       </div>
 

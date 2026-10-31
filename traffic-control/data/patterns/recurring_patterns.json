@@ -1,0 +1,71 @@
+[
+  {
+    "id": "pat_mum_01",
+    "cityId": "mumbai",
+    "location": "WEH - Kalanagar Junction / Bandra Kurla Complex (BKC) Connector",
+    "corridorCode": "WEH",
+    "coordinates": [19.0600, 72.8480],
+    "peakWindows": [
+      { "period": "MORNING_PEAK", "time": "08:30 - 11:30", "direction": "Southbound to BKC/Town", "avgCongestionRatio": 0.24 },
+      { "period": "EVENING_PEAK", "time": "17:30 - 21:00", "direction": "Northbound to Suburbs", "avgCongestionRatio": 0.20 }
+    ],
+    "primaryContributingFactor": "Heavy 6-lane into 3-lane vehicular necking at Dharavi slip merge combined with BKC flyover exit queueing.",
+    "recurringPropagation": "Spills backward 4.2 km up to Santacruz Airport flyover.",
+    "recommendedInterventions": [
+      {
+        "type": "SIGNAL_RETIMING",
+        "description": "Adaptive dynamic green extension of 25 seconds for Western Express mainline during 08:45 - 10:15.",
+        "feasibility": "IMMEDIATE (Software/SCADA adjustment)",
+        "expectedDelayReduction": "12 - 16%"
+      },
+      {
+        "type": "PEAK_HOUR_TIDAL_FLOW",
+        "description": "Deploy cone-barrier reversible tidal 4th lane southbound from 08:30 - 11:00.",
+        "feasibility": "SHORT_TERM (Police cone deployment)",
+        "expectedDelayReduction": "20 - 25%"
+      }
+    ]
+  },
+  {
+    "id": "pat_ngp_01",
+    "cityId": "nagpur",
+    "location": "Wardha Road - Rahate Colony Square to Sitabuldi",
+    "corridorCode": "WRD",
+    "coordinates": [21.1270, 79.0790],
+    "peakWindows": [
+      { "period": "MORNING_PEAK", "time": "09:30 - 11:30", "direction": "Northbound to Central Business District", "avgCongestionRatio": 0.32 },
+      { "period": "EVENING_PEAK", "time": "18:00 - 20:30", "direction": "Southbound to MIHAN / Sonegaon", "avgCongestionRatio": 0.28 }
+    ],
+    "primaryContributingFactor": "Unregulated bus stop positioning right before left-turn slip road causing complete blockage of turning lane.",
+    "recurringPropagation": "Spills onto Ajni railway overbridge approach.",
+    "recommendedInterventions": [
+      {
+        "type": "BUS_STOP_RELOCATION",
+        "description": "Shift MSRTC / City bus stop 75 meters south into designated recessed passenger bay.",
+        "feasibility": "MEDIUM (Pavement widening & signage)",
+        "expectedDelayReduction": "22 - 28%"
+      }
+    ]
+  },
+  {
+    "id": "pat_pun_01",
+    "cityId": "pune",
+    "location": "Hinjawadi IT Corridor - Shivaji Chowk Phase 1",
+    "corridorCode": "HIN",
+    "coordinates": [18.5940, 73.7420],
+    "peakWindows": [
+      { "period": "MORNING_PEAK", "time": "08:30 - 11:30", "direction": "Westbound into Tech Parks", "avgCongestionRatio": 0.16 },
+      { "period": "EVENING_PEAK", "time": "17:30 - 21:30", "direction": "Eastbound towards Wakad / Expressway", "avgCongestionRatio": 0.14 }
+    ],
+    "primaryContributingFactor": "Single ingress artery receiving combined traffic from Wakad, Bhumkar, and Punawale bridges with zero dedicated turning bays.",
+    "recurringPropagation": "Tailbacks reach 5.5 km back across Wakad Bridge onto NH48 bypass.",
+    "recommendedInterventions": [
+      {
+        "type": "ONE_WAY_LOOP_EXPERIMENT",
+        "description": "Implement clockwise circular one-way loop via Marunji Road for outbound evening traffic.",
+        "feasibility": "SHORT_TERM (Signage & traffic police deployment)",
+        "expectedDelayReduction": "30 - 35%"
+      }
+    ]
+  }
+]

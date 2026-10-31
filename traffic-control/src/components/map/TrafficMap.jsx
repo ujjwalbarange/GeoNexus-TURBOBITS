@@ -9,7 +9,6 @@ import { trafficApiClient } from '../../services/trafficApi';
 import { rootMapService } from '../../services/rootMapService';
 import MapControls from '../controls/MapControls';
 
-// Facility Icon Helpers
 const FACILITY_ICONS = {
   police: '🚓',
   traffic_police: '🚦',
@@ -26,9 +25,14 @@ export default function TrafficMap({
   selectedSegment,
   onSelectSegment,
   focusTrigger,
+  focusCoords,
   showFacilities = true,
   showDrainage = true,
   showZones = false,
+  showTrafficOverlay = true,
+  onToggleTrafficOverlay,
+  redZones = [],
+  onSelectRedZone,
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -40,26 +44,28 @@ export default function TrafficMap({
   const facilitiesLayerGroupRef = useRef(null);
   const drainageLayerGroupRef = useRef(null);
   const zonesLayerGroupRef = useRef(null);
+  const redZonesLayerGroupRef = useRef(null);
 
   const [selectedProviderId, setSelectedProviderId] = useState(DEFAULT_MAP_PROVIDER_ID);
-  const [showTrafficOverlay, setShowTrafficOverlay] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const currentCity = CITIES[selectedCityId] || CITIES.mumbai;
 
-  // 1. Initialize Map on Mount with OpenStreetMap Default
+  // 1. Initialize Map on Mount with OpenStreetMap Default & Strict City MaxBounds
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
     const initialCity = CITIES[selectedCityId] || CITIES.mumbai;
     const provider = MAP_PROVIDERS.find((p) => p.id === selectedProviderId) || MAP_PROVIDERS[0];
 
-    // Create Map with Canvas Renderer for 60fps pan/zoom
+    // Hardware-accelerated canvas map with strict city boundary isolation
     const map = L.map(mapContainerRef.current, {
       center: initialCity.center,
       zoom: initialCity.defaultZoom,
-      minZoom: 9,
-      maxZoom: 19,
+      minZoom: 10,
+      maxZoom: 18,
+      maxBounds: initialCity.bounds,
+      maxBoundsViscosity: 1.0, // Strictly lock viewport within city bounds
       zoomControl: false,
       preferCanvas: true,
       attributionControl: true,
@@ -74,21 +80,27 @@ export default function TrafficMap({
 
     baseTileLayerRef.current = baseTileLayer;
 
-    // Add TomTom Live Flow Overlay Tile Layer
+    // Add TomTom Live Flow Overlay Tile Layer — bounded STRICTLY to city bounds to save API quota
     const tomtomUrl = trafficApiClient.getTrafficTileUrl('relative0');
     if (tomtomUrl) {
       const tomtomTileLayer = L.tileLayer(tomtomUrl, {
-        maxZoom: 19,
+        maxZoom: 18,
         opacity: 0.85,
+        bounds: initialCity.bounds, // Prevents loading tiles outside the selected city
         attribution: '&copy; <a href="https://www.tomtom.com" target="_blank" rel="noreferrer">TomTom</a>',
-      }).addTo(map);
+      });
+
+      if (showTrafficOverlay) {
+        tomtomTileLayer.addTo(map);
+      }
       tomtomTileLayerRef.current = tomtomTileLayer;
     }
 
-    // Initialize Root GIS Layer Groups
+    // Initialize Layer Groups
     facilitiesLayerGroupRef.current = L.layerGroup().addTo(map);
     drainageLayerGroupRef.current = L.layerGroup().addTo(map);
     zonesLayerGroupRef.current = L.layerGroup().addTo(map);
+    redZonesLayerGroupRef.current = L.layerGroup().addTo(map);
 
     // Initialize Interactive Vector Corridor Manager
     const trafficManager = new TrafficMapLayerManager(map);
@@ -115,16 +127,25 @@ export default function TrafficMap({
     };
   }, []);
 
-  // 2. Smoothly flyTo city when selectedCityId changes
+  // 2. Smoothly flyTo city when selectedCityId changes + update strict city bounds
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
     const city = CITIES[selectedCityId] || CITIES.mumbai;
+
+    // Update strict city pan bounds
+    map.setMaxBounds(city.bounds);
+
     map.flyTo(city.center, city.defaultZoom, {
-      duration: 1.4,
+      duration: 1.2,
       easeLinearity: 0.25,
     });
+
+    // Update TomTom tile bounds to new city
+    if (tomtomTileLayerRef.current) {
+      tomtomTileLayerRef.current.options.bounds = city.bounds;
+    }
   }, [selectedCityId]);
 
   // 3. Switch Base Tile Provider
@@ -143,7 +164,6 @@ export default function TrafficMap({
 
     newBaseTileLayer.addTo(map);
 
-    // Keep overlays on top
     if (tomtomTileLayerRef.current && map.hasLayer(tomtomTileLayerRef.current)) {
       tomtomTileLayerRef.current.bringToFront();
     }
@@ -157,15 +177,12 @@ export default function TrafficMap({
     if (!map) return;
 
     async function loadRootMapServices() {
-      // Clear previous layers
       facilitiesLayerGroupRef.current?.clearLayers();
       drainageLayerGroupRef.current?.clearLayers();
       zonesLayerGroupRef.current?.clearLayers();
 
-      // A. Load Facilities & Zones from Root Project /api/admin/map-data
       const mapData = await rootMapService.fetchCityMapData(selectedCityId);
 
-      // Render Emergency / Traffic Facilities
       if (showFacilities && mapData.facilities?.length > 0) {
         mapData.facilities.forEach((fac) => {
           if (!fac.latitude || !fac.longitude) return;
@@ -206,7 +223,6 @@ export default function TrafficMap({
         });
       }
 
-      // Render Wards / Zones
       if (showZones && mapData.zones?.length > 0) {
         mapData.zones.forEach((z) => {
           if (!z.polygon || z.polygon.length === 0) return;
@@ -223,7 +239,6 @@ export default function TrafficMap({
         });
       }
 
-      // B. Load Drainage & Waterways GeoJSON from Root Project /api/hazards/map-layers
       if (showDrainage) {
         const layersData = await rootMapService.fetchCityLayers(selectedCityId, ['drainage', 'waterways']);
         const drainageGeo = layersData.layers?.drainage || layersData.layers?.waterways;
@@ -249,7 +264,52 @@ export default function TrafficMap({
     loadRootMapServices();
   }, [selectedCityId, showFacilities, showDrainage, showZones]);
 
-  // 5. Toggle TomTom Flow Tile Layer + Vector Layers
+  // 5. Render Detected Red Zones Overlays
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !redZonesLayerGroupRef.current) return;
+
+    redZonesLayerGroupRef.current.clearLayers();
+
+    if (redZones && redZones.length > 0) {
+      redZones.forEach((rz) => {
+        if (!rz.coordinates || rz.coordinates.length < 2) return;
+
+        // Visual pulsing halo polyline
+        const halo = L.polyline(rz.coordinates, {
+          color: rz.color || '#ef4444',
+          weight: 14,
+          opacity: 0.35,
+          lineCap: 'round',
+          interactive: false,
+        });
+
+        // Interactive red zone line
+        const rzLine = L.polyline(rz.coordinates, {
+          color: rz.color || '#ef4444',
+          weight: 7,
+          opacity: 0.95,
+          lineCap: 'round',
+        });
+
+        rzLine.bindTooltip(`
+          <div style="font-family: 'Inter', sans-serif; font-size: 12px; color: #fff;">
+            <div style="font-weight: 700; color: #ef4444;">🚨 RED ZONE: ${rz.corridorName}</div>
+            <div style="font-size: 11px; color: #f8fafc;">Delay: +${rz.delayMinutes} mins · ${rz.currentSpeedKmH || 15} km/h</div>
+          </div>
+        `, { sticky: true, className: 'traffic-tooltip-dark' });
+
+        rzLine.on('click', () => {
+          if (onSelectRedZone) onSelectRedZone(rz);
+        });
+
+        redZonesLayerGroupRef.current.addLayer(halo);
+        redZonesLayerGroupRef.current.addLayer(rzLine);
+      });
+    }
+  }, [redZones, onSelectRedZone]);
+
+  // 6. Toggle TomTom Flow Tile Layer + Vector Layers
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -275,12 +335,14 @@ export default function TrafficMap({
     manager.renderSegments(segments, selectedSegment?.id || null);
   }, [trafficData, showTrafficOverlay, selectedSegment]);
 
-  // 6. External Focus Trigger
+  // 7. External Focus Trigger
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || !selectedSegment || !focusTrigger) return;
+    if (!map) return;
 
-    if (selectedSegment.coordinates && selectedSegment.coordinates.length > 0) {
+    if (focusCoords && focusCoords.length === 2) {
+      map.flyTo(focusCoords, 14, { duration: 1.0 });
+    } else if (selectedSegment && selectedSegment.coordinates?.length > 0 && focusTrigger) {
       const bounds = L.latLngBounds(selectedSegment.coordinates);
       map.flyToBounds(bounds, {
         padding: [80, 80],
@@ -288,7 +350,7 @@ export default function TrafficMap({
         duration: 1.0,
       });
     }
-  }, [focusTrigger, selectedSegment]);
+  }, [focusTrigger, focusCoords, selectedSegment]);
 
   // Controls
   const handleZoomIn = () => mapInstanceRef.current?.zoomIn();
@@ -321,7 +383,7 @@ export default function TrafficMap({
         onZoomOut={handleZoomOut}
         onResetView={handleResetView}
         showTrafficOverlay={showTrafficOverlay}
-        onToggleTrafficOverlay={() => setShowTrafficOverlay(!showTrafficOverlay)}
+        onToggleTrafficOverlay={onToggleTrafficOverlay}
         selectedProviderId={selectedProviderId}
         onSelectProvider={setSelectedProviderId}
         onToggleFullscreen={handleToggleFullscreen}

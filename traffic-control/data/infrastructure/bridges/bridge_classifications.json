@@ -1,0 +1,144 @@
+[
+  {
+    "typeId": "flyover",
+    "name": "Grade-Separated Flyover",
+    "category": "Arterial Overpass",
+    "structuralCharacteristics": "Elevated pre-stressed concrete or steel composite girder viaduct bypassing surface intersection.",
+    "typicalApplications": "High-volume arterial junctions where cross-traffic or signal phasing causes severe back-propagation.",
+    "requiredLandConditions": "Median width >= 3.5m for pier placement; right-of-way >= 30m; approach ramp grade <= 4%.",
+    "roadConnectivity": "Dual-carriageway direct pass-through with surface level slip-roads for local turning movements.",
+    "trafficProblemsAddressed": [
+      "Intersection conflict elimination",
+      "Signal wait-time reduction",
+      "Through-traffic segregation from turning movements"
+    ],
+    "advantages": "Eliminates major signal delays; maintains through-flow at design speed (60-80 km/h); moderate footprint.",
+    "limitations": "Does not solve turning conflicts without integrated loops; high cost; visual and sound barrier for street frontage.",
+    "constructionComplexity": "MEDIUM-HIGH",
+    "engineeringConsiderations": "Utility relocation (water mains, underground power, metro crossings), seismic bearing pads, storm runoff drainage.",
+    "maintenanceConsiderations": "Expansion joint replacement every 5-7 years, elastomer bearing inspection, pier scupper drainage clearance."
+  },
+  {
+    "typeId": "grade_separated_interchange",
+    "name": "Partial Cloverleaf / Diamond Interchange",
+    "category": "Expressway Interchange",
+    "structuralCharacteristics": "Multi-level interchange incorporating directional loop ramps and elevated flyovers connecting intersecting highways.",
+    "typicalApplications": "Intersecting expressways or ring-road crossings with heavy turning volume.",
+    "requiredLandConditions": "Extensive land availability (10-25 hectares) at junction quadrants.",
+    "roadConnectivity": "Uninterrupted free-flow merging between main expressways and intersecting arterials.",
+    "trafficProblemsAddressed": [
+      "Severe weaving conflicts on intersecting highways",
+      "Complete elimination of cross-traffic signals"
+    ],
+    "advantages": "Maximum traffic throughput; zero stop-and-go movements on mainline.",
+    "limitations": "Enormous land acquisition requirement; high capital cost; pedestrian severance.",
+    "constructionComplexity": "VERY HIGH",
+    "engineeringConsiderations": "Acceleration/deceleration lane taper distances, superelevation on loops, high-mast illumination.",
+    "maintenanceConsiderations": "Ramp pavement structural health, safety crash barrier integrity, slope stabilization."
+  },
+  {
+    "typeId": "rob",
+    "name": "Road Overbridge (ROB)",
+    "category": "Railway Grade Separation",
+    "structuralCharacteristics": "Steel truss or composite girder span clearing multi-track railway electrification (OHE) clearance (min 6.5m).",
+    "typicalApplications": "Bypassing railway level crossings (LC gates) causing catastrophic intermittent road closures.",
+    "requiredLandConditions": "Long approach ramps due to railway vertical clearance mandates; right-of-way >= 24m.",
+    "roadConnectivity": "Continuous connection across railway corridor linking divided urban sectors.",
+    "trafficProblemsAddressed": [
+      "Railway gate closure blockages",
+      "Severe vehicle queuing during train passing"
+    ],
+    "advantages": "Eliminates 15-45 minute level-crossing gate closures; saves millions in idling fuel.",
+    "limitations": "Steep approaches require land acquisition for service roads; railway block coordination needed for construction.",
+    "constructionComplexity": "HIGH",
+    "engineeringConsiderations": "Railway safety clearances, launching girders during designated railway traffic blocks, anti-collision pier guards.",
+    "maintenanceConsiderations": "Corrosion monitoring from locomotive exhaust, bridge expansion joints, bearing health."
+  },
+  {
+    "typeId": "rub",
+    "name": "Road Underbridge / Vehicular Underpass (RUB)",
+    "category": "Sub-surface Crossing",
+    "structuralCharacteristics": "Reinforced concrete box culvert or diaphragm wall underpass depressed below ground or railway track level.",
+    "typicalApplications": "Dense urban junctions or railway crossings where high approach ramps of an overbridge are spatially impossible.",
+    "requiredLandConditions": "High water table mitigation; adequate storm drainage outfall; minimal deep underground utility conflicts.",
+    "roadConnectivity": "Depressed roadway carrying through-traffic beneath surface junction.",
+    "trafficProblemsAddressed": [
+      "Junction grade separation in tight urban heritage or airport height-restricted corridors"
+    ],
+    "advantages": "Minimal visual impact; preserves street skyline; suitable near airports with height ceilings.",
+    "limitations": "High flood vulnerability during heavy monsoon; requires dedicated pumping stations; blind curves.",
+    "constructionComplexity": "HIGH",
+    "engineeringConsiderations": "Waterproofing membranes, submersible pump sump wells, ventilation in enclosed sections, retained cut walls.",
+    "maintenanceConsiderations": "Monsoon pumping system reliability, sediment desilting in drainage gutters, lighting replacement."
+  },
+  {
+    "typeId": "elevated_corridor",
+    "name": "Multi-Kilometer Elevated Expressway Corridor",
+    "category": "Long-distance Viaduct",
+    "structuralCharacteristics": "Continuous segmental precast box girder viaduct spanning 3-15 km above existing congested surface arterials.",
+    "typicalApplications": "Linear high-density transit corridors (e.g. Eastern Freeway, Western Express Highway) connecting city center to suburbs.",
+    "requiredLandConditions": "Substantial median width; geotechnical capacity for deep pile foundations.",
+    "roadConnectivity": "Limited access with designated entry/exit toll ramps; bypasses dozens of surface traffic signals.",
+    "trafficProblemsAddressed": [
+      "Regional through-traffic congestion mixing with local suburban traffic",
+      "Massive cross-city transit time reduction"
+    ],
+    "advantages": "Drastically slashes cross-city commute time; separates non-stop long distance trips from local shoppers.",
+    "limitations": "Massive capital expenditure; complex ramp merging geometry; emergency evacuation logistics.",
+    "constructionComplexity": "VERY HIGH",
+    "engineeringConsiderations": "Segmental launching gantry logistics, seismic isolators, crash barriers, intelligent traffic monitoring (ITMS).",
+    "maintenanceConsiderations": "Structural health monitoring sensors, resurfacing of micro-surfacing wearing coats, rainwater downpipe maintenance."
+  },
+  {
+    "typeId": "cable_stayed_bridge",
+    "name": "Cable-Stayed Bridge",
+    "category": "Long-span Signature Crossing",
+    "structuralCharacteristics": "Tower pylons carrying high-tensile steel cable stays supporting orthotropic steel or composite deck spans.",
+    "typicalApplications": "Broad maritime bays, wide river estuaries, or navigable waterways where piers cannot be placed in the channel.",
+    "requiredLandConditions": "Deep bedrock anchorages for pylons; substantial maritime foundation depth.",
+    "roadConnectivity": "Direct sea/bay crossing (e.g. Bandra-Worli Sea Link) eliminating inland detours.",
+    "trafficProblemsAddressed": [
+      "Geographic water barrier choke points forcing traffic through narrow bottleneck isthmuses"
+    ],
+    "advantages": "Aesthetically striking landmark; spans massive maritime distances without intermediate navigational obstruction.",
+    "limitations": "Extremely high design and construction cost; wind and aerodynamic damping requirements; high toll fees.",
+    "constructionComplexity": "EXTREME",
+    "engineeringConsiderations": "Aerodynamic wind tunnel testing, cable stay dampeners, pylon scour protection, cathodic corrosion protection.",
+    "maintenanceConsiderations": "Cable stay tension calibration, non-destructive cable testing, acoustic crack monitoring, corrosion barrier maintenance."
+  },
+  {
+    "typeId": "pedestrian_overbridge",
+    "name": "Grade-Separated Pedestrian Foot Overbridge (FOB)",
+    "category": "Pedestrian Safety",
+    "structuralCharacteristics": "Steel truss or light concrete walkway with staircases, escalators, and elevators bridging multi-lane arterials.",
+    "typicalApplications": "High-density pedestrian crossings near railway stations, schools, metro hubs, and shopping districts.",
+    "requiredLandConditions": "Footpath space for staircase and lift well landings.",
+    "roadConnectivity": "Completely isolates pedestrian foot-traffic from vehicular traffic flow.",
+    "trafficProblemsAddressed": [
+      "Pedestrian jaywalking causing emergency vehicle braking and traffic accordion jams",
+      "Mid-block pedestrian accident blackspots"
+    ],
+    "advantages": "Very low relative cost; rapid construction; eliminates pedestrian-vehicle friction and preserves green light flow.",
+    "limitations": "Underutilized if elevators/escalators are absent; requires enforcement against surface crossing.",
+    "constructionComplexity": "LOW-MEDIUM",
+    "engineeringConsiderations": "Universal accessibility (ADA/RPwD compliant lifts), anti-vandalism mesh, roofing for monsoon protection.",
+    "maintenanceConsiderations": "Lift/escalator electrical maintenance, step anti-skid resurfacing, lighting integrity."
+  },
+  {
+    "typeId": "underpass_tunnel",
+    "name": "Twin-Tube Bored Road Tunnel",
+    "category": "Subterranean Expressway",
+    "structuralCharacteristics": "Tunnel Boring Machine (TBM) excavated circular twin tunnels with emergency cross-passages and longitudinal jet ventilation.",
+    "typicalApplications": "Hilly terrain, coastal shoreline bypasses, or dense heritage districts where surface/elevated construction is prohibited.",
+    "requiredLandConditions": "Stable rock strata or geotechnical grouting; portal entry/exit footprint.",
+    "roadConnectivity": "Subterranean arterial connecting isolated urban valleys or coastal bays.",
+    "trafficProblemsAddressed": [
+      "Mountain pass bottlenecks, coastal topography congestion, surface land exhaustion"
+    ],
+    "advantages": "Zero surface land disruption; weatherproof; direct subterranean alignment.",
+    "limitations": "Highest per-kilometer engineering cost; complex emergency evacuation and fire suppression systems.",
+    "constructionComplexity": "EXTREME",
+    "engineeringConsiderations": "Tunnel fire-life-safety SCADA, water mist deluge systems, air ventilation shafts, tunnel portal drainage sumps.",
+    "maintenanceConsiderations": "Continuous ventilation fan testing, lighting lumen maintenance, air quality CO/NO2 sensor calibration."
+  }
+]

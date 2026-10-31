@@ -1,0 +1,77 @@
+[
+  {
+    "id": "rest_mum_01",
+    "cityId": "mumbai",
+    "corridorCode": "WEH",
+    "roadName": "Western Express Highway (Goregaon Aarey Flyover)",
+    "restrictionType": "PARTIAL_LANE_CLOSURE",
+    "coordinates": [
+      [19.1640, 72.8580],
+      [19.1720, 72.8595]
+    ],
+    "cause": "Metro Line 7 / Road Joint Rehabilitation",
+    "laneImpact": "2 of 4 northbound lanes barricaded",
+    "speedPenaltyPercent": 55,
+    "startTimestamp": "2026-10-25T00:00:00Z",
+    "expectedEndTimestamp": "2026-11-15T18:00:00Z",
+    "verificationStatus": "VERIFIED_MUNICIPAL_NOTICE",
+    "alternativeDiversions": [
+      {
+        "routeId": "alt_mum_link_rd",
+        "routeName": "SV Road & New Link Road Corridor",
+        "additionalDistanceKm": 2.8,
+        "estimatedDeltaMins": -12
+      }
+    ]
+  },
+  {
+    "id": "rest_ngp_01",
+    "cityId": "nagpur",
+    "corridorCode": "WRD",
+    "roadName": "Wardha Road (Ajni ROB approach)",
+    "restrictionType": "HEAVY_VEHICLE_RESTRICTION",
+    "coordinates": [
+      [21.1120, 79.0710],
+      [21.1180, 79.0760]
+    ],
+    "cause": "Ajni Railway Overbridge Structural Pier Rehabilitation",
+    "laneImpact": "Buses and Heavy Commercial Vehicles diverted",
+    "speedPenaltyPercent": 35,
+    "startTimestamp": "2026-10-10T00:00:00Z",
+    "expectedEndTimestamp": "2026-12-31T23:59:59Z",
+    "verificationStatus": "VERIFIED_POLICE_NOTIFICATION",
+    "alternativeDiversions": [
+      {
+        "routeId": "alt_ngp_orr",
+        "routeName": "Manish Nagar Underpass & Outer Ring Road",
+        "additionalDistanceKm": 3.4,
+        "estimatedDeltaMins": -8
+      }
+    ]
+  },
+  {
+    "id": "rest_pun_01",
+    "cityId": "pune",
+    "corridorCode": "HIN",
+    "roadName": "Hinjawadi Phase 1 to Wakad Flyover",
+    "restrictionType": "CONSTRUCTION_WORK",
+    "coordinates": [
+      [18.5970, 73.7550],
+      [18.5995, 73.7630]
+    ],
+    "cause": "Pune Metro Line 3 Viaduct Pier Erection & Road Widening",
+    "laneImpact": "Single lane operational per direction",
+    "speedPenaltyPercent": 65,
+    "startTimestamp": "2026-09-01T00:00:00Z",
+    "expectedEndTimestamp": "2026-11-30T23:59:59Z",
+    "verificationStatus": "VERIFIED_PMRDA_NOTICE",
+    "alternativeDiversions": [
+      {
+        "routeId": "alt_pun_marunji",
+        "routeName": "Marunji Road via Kasarsai / Dange Chowk Bypass",
+        "additionalDistanceKm": 4.1,
+        "estimatedDeltaMins": -18
+      }
+    ]
+  }
+]

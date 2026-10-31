@@ -1,0 +1,121 @@
+[
+  {
+    "id": "mum_pol_01",
+    "unitCode": "TP-MUM-ANDH-01",
+    "cityId": "mumbai",
+    "officerInCharge": "Inspector R. S. Shinde",
+    "policeStation": "Andheri Traffic Division",
+    "location": {
+      "name": "Andheri Flyover South Pier",
+      "coordinates": [19.1150, 72.8680]
+    },
+    "dutyStatus": "ON_DUTY",
+    "availabilityStatus": "AVAILABLE",
+    "deploymentType": "MOTORCYCLE_PATROL",
+    "capability": "CONGESTION_CLEARANCE",
+    "currentAssignedIncident": null,
+    "lastLocationUpdate": "2026-10-31T14:05:00Z"
+  },
+  {
+    "id": "mum_pol_02",
+    "unitCode": "TP-MUM-BAND-04",
+    "cityId": "mumbai",
+    "officerInCharge": "Sub-Inspector P. K. More",
+    "policeStation": "Bandra Traffic Division",
+    "location": {
+      "name": "Bandra Toll Plaza Post",
+      "coordinates": [19.0510, 72.8340]
+    },
+    "dutyStatus": "ON_DUTY",
+    "availabilityStatus": "DEPLOYED",
+    "deploymentType": "JUNCTION_POST",
+    "capability": "TRAFFIC_MANUAL_SIGNAL",
+    "currentAssignedIncident": "inc_mum_08",
+    "lastLocationUpdate": "2026-10-31T13:50:00Z"
+  },
+  {
+    "id": "mum_pol_03",
+    "unitCode": "TP-MUM-GHAT-02",
+    "cityId": "mumbai",
+    "officerInCharge": "Assistant Inspector V. D. Patil",
+    "policeStation": "Ghatkopar Traffic Division",
+    "location": {
+      "name": "EEH Ghatkopar Link Junction",
+      "coordinates": [19.0845, 72.9070]
+    },
+    "dutyStatus": "ON_DUTY",
+    "availabilityStatus": "AVAILABLE",
+    "deploymentType": "TRAFFIC_INTERCEPTOR",
+    "capability": "CONGESTION_CLEARANCE",
+    "currentAssignedIncident": null,
+    "lastLocationUpdate": "2026-10-31T14:10:00Z"
+  },
+  {
+    "id": "ngp_pol_01",
+    "unitCode": "TP-NGP-SITA-01",
+    "cityId": "nagpur",
+    "officerInCharge": "Inspector A. G. Deshmukh",
+    "policeStation": "Sitabuldi Traffic Branch",
+    "location": {
+      "name": "Sitabuldi Square Traffic Tower",
+      "coordinates": [21.1460, 79.0835]
+    },
+    "dutyStatus": "ON_DUTY",
+    "availabilityStatus": "AVAILABLE",
+    "deploymentType": "JUNCTION_POST",
+    "capability": "TRAFFIC_MANUAL_SIGNAL",
+    "currentAssignedIncident": null,
+    "lastLocationUpdate": "2026-10-31T14:15:00Z"
+  },
+  {
+    "id": "ngp_pol_02",
+    "unitCode": "TP-NGP-AJNI-03",
+    "cityId": "nagpur",
+    "officerInCharge": "Sub-Inspector M. R. Joshi",
+    "policeStation": "Ajni Traffic Division",
+    "location": {
+      "name": "Ajni Square / Wardha Road",
+      "coordinates": [21.1090, 79.0670]
+    },
+    "dutyStatus": "ON_DUTY",
+    "availabilityStatus": "BUSY",
+    "deploymentType": "MOTORCYCLE_PATROL",
+    "capability": "ACCIDENT_INVESTIGATION",
+    "currentAssignedIncident": "inc_ngp_02",
+    "lastLocationUpdate": "2026-10-31T13:45:00Z"
+  },
+  {
+    "id": "pun_pol_01",
+    "unitCode": "TP-PUN-HINJ-01",
+    "cityId": "pune",
+    "officerInCharge": "Inspector S. T. Kadam",
+    "policeStation": "Hinjawadi Traffic Division (Pimpri-Chinchwad Police)",
+    "location": {
+      "name": "Shivaji Chowk Police Chowki",
+      "coordinates": [18.5945, 73.7425]
+    },
+    "dutyStatus": "ON_DUTY",
+    "availabilityStatus": "AVAILABLE",
+    "deploymentType": "JUNCTION_POST",
+    "capability": "CONGESTION_CLEARANCE",
+    "currentAssignedIncident": null,
+    "lastLocationUpdate": "2026-10-31T14:12:00Z"
+  },
+  {
+    "id": "pun_pol_02",
+    "unitCode": "TP-PUN-WAKD-02",
+    "cityId": "pune",
+    "officerInCharge": "Sub-Inspector H. B. Shinde",
+    "policeStation": "Wakad Traffic Division",
+    "location": {
+      "name": "Wakad Flyover NH48 Junction",
+      "coordinates": [18.5990, 73.7640]
+    },
+    "dutyStatus": "ON_DUTY",
+    "availabilityStatus": "AVAILABLE",
+    "deploymentType": "TRAFFIC_INTERCEPTOR",
+    "capability": "TRAFFIC_MANUAL_SIGNAL",
+    "currentAssignedIncident": null,
+    "lastLocationUpdate": "2026-10-31T14:08:00Z"
+  }
+]
