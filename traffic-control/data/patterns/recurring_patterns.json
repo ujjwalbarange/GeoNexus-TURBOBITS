@@ -27,6 +27,27 @@
     ]
   },
   {
+    "id": "pat_mum_02",
+    "cityId": "mumbai",
+    "location": "EEH - Chedda Nagar Junction / SCLR Elevated Ramp Merge",
+    "corridorCode": "EEH",
+    "coordinates": [19.0680, 72.9020],
+    "peakWindows": [
+      { "period": "MORNING_PEAK", "time": "09:00 - 11:30", "direction": "Southbound to Sion", "avgCongestionRatio": 0.26 },
+      { "period": "EVENING_PEAK", "time": "18:00 - 21:00", "direction": "Northbound to Thane", "avgCongestionRatio": 0.22 }
+    ],
+    "primaryContributingFactor": "Santa Cruz-Chembur Link Road (SCLR) elevated slip merging directly into through Eastern Express highway traffic.",
+    "recurringPropagation": "Spills backward 3.8 km towards Vikhroli Godrej campus.",
+    "recommendedInterventions": [
+      {
+        "type": "RAMP_METERING",
+        "description": "Implement automated ramp metering signal to regulate entering vehicle bursts from SCLR slip.",
+        "feasibility": "MEDIUM (Variable message signs & signals)",
+        "expectedDelayReduction": "18 - 22%"
+      }
+    ]
+  },
+  {
     "id": "pat_ngp_01",
     "cityId": "nagpur",
     "location": "Wardha Road - Rahate Colony Square to Sitabuldi",
@@ -48,6 +69,47 @@
     ]
   },
   {
+    "id": "pat_ngp_02",
+    "cityId": "nagpur",
+    "location": "Central Avenue - Mayo Hospital & Agrasen Square Corridor",
+    "corridorCode": "CAR",
+    "coordinates": [21.1520, 79.1040],
+    "peakWindows": [
+      { "period": "MORNING_PEAK", "time": "10:00 - 12:30", "direction": "Eastbound to Itwari wholesale market", "avgCongestionRatio": 0.30 },
+      { "period": "EVENING_PEAK", "time": "17:30 - 21:00", "direction": "Bidirectional commercial peak", "avgCongestionRatio": 0.25 }
+    ],
+    "primaryContributingFactor": "Commercial loading/unloading goods vehicles occupying outer roadway lanes combined with emergency ambulance ingress.",
+    "recurringPropagation": "Spills 2.5 km towards Dosar Vaishya Square and railway station east gate.",
+    "recommendedInterventions": [
+      {
+        "type": "COMMERCIAL_TIMED_RESTRICTION",
+        "description": "Enforce strict ban on commercial goods loading between 09:00 - 12:00 and 17:00 - 20:00 with dedicated night freight window.",
+        "feasibility": "IMMEDIATE (Municipal notification & police enforcement)",
+        "expectedDelayReduction": "30 - 35%"
+      }
+    ]
+  },
+  {
+    "id": "pat_ngp_03",
+    "cityId": "nagpur",
+    "location": "Outer Ring Road (ORR) - Wadi Freight Junction & NH-53",
+    "corridorCode": "ORR",
+    "coordinates": [21.1510, 79.0120],
+    "peakWindows": [
+      { "period": "NIGHT_FREIGHT_SURGE", "time": "21:00 - 02:00", "direction": "Inter-state freight crossing", "avgCongestionRatio": 0.22 },
+      { "period": "MORNING_PEAK", "time": "08:30 - 10:30", "direction": "Industrial commuter ingress", "avgCongestionRatio": 0.34 }
+    ],
+    "primaryContributingFactor": "Heavy multi-axle freight convoys making wide turning sweeps across un-signalized rotary.",
+    "recommendedInterventions": [
+      {
+        "type": "GRADE_SEPARATION_ROTARY",
+        "description": "Construct four-leaf cloverleaf rotary grade separation with pedestrian underpass.",
+        "feasibility": "LONG_TERM (Capital Infrastructure Project)",
+        "expectedDelayReduction": "45 - 55%"
+      }
+    ]
+  },
+  {
     "id": "pat_pun_01",
     "cityId": "pune",
     "location": "Hinjawadi IT Corridor - Shivaji Chowk Phase 1",
@@ -65,6 +127,27 @@
         "description": "Implement clockwise circular one-way loop via Marunji Road for outbound evening traffic.",
         "feasibility": "SHORT_TERM (Signage & traffic police deployment)",
         "expectedDelayReduction": "30 - 35%"
+      }
+    ]
+  },
+  {
+    "id": "pat_pun_02",
+    "cityId": "pune",
+    "location": "Senapati Bapat Road - Pune University Circle Multi-Way Convergence",
+    "corridorCode": "SBR",
+    "coordinates": [18.5360, 73.8320],
+    "peakWindows": [
+      { "period": "MORNING_PEAK", "time": "08:45 - 11:00", "direction": "Northbound to Aundh / Baner", "avgCongestionRatio": 0.25 },
+      { "period": "EVENING_PEAK", "time": "18:00 - 20:30", "direction": "Southbound to Shivajinagar", "avgCongestionRatio": 0.20 }
+    ],
+    "primaryContributingFactor": "Six-arm grade intersection conflict complicated by ongoing Metro Line 3 viaduct construction piers.",
+    "recurringPropagation": "Spills 3.2 km down Ganeshkhind Road and Pashan Road.",
+    "recommendedInterventions": [
+      {
+        "type": "INTEGRATED_METRO_FLYOVER",
+        "description": "Expedite composite double-decker flyover connecting Aundh and Ganeshkhind road with integrated metro deck.",
+        "feasibility": "ACTIVE_CONSTRUCTION (PMRDA / Maha-Metro)",
+        "expectedDelayReduction": "50 - 60%"
       }
     ]
   }

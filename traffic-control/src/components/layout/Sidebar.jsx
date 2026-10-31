@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CITIES } from '../../config/cities';
 import { formatTimeAgo } from '../../utils/formatters';
+import { themeManager } from '../../services/themeManager';
+import { eventBus, EVENT_TYPES } from '../../services/eventBus';
 
-export const NAVIGATION_ITEMS = [
+const NAVIGATION_ITEMS = [
   { id: 'overview', label: 'Overview', icon: '🏛️' },
   { id: 'map', label: 'Live Traffic Map', icon: '🗺️' },
   { id: 'red_zones', label: 'Red Zone Detection', icon: '🚨' },
@@ -25,7 +27,16 @@ export default function Sidebar({
   isCached,
   isOpenMobile,
   onCloseMobile,
+  onOpenSandbox = null,
 }) {
+  const [currentTheme, setCurrentTheme] = useState(themeManager.getTheme());
+
+  useEffect(() => {
+    const unsub = eventBus.subscribe(EVENT_TYPES.THEME_CHANGED, (evt) => {
+      setCurrentTheme(evt?.payload?.theme || themeManager.getTheme());
+    });
+    return unsub;
+  }, []);
   const redZoneCount = orchestratorOutput?.detection?.redZones?.length || 0;
   const dispatchCount = orchestratorOutput?.policeDispatch?.recommendations?.length || 0;
 
@@ -53,7 +64,7 @@ export default function Sidebar({
         }}
       >
         {/* Brand Header */}
-        <div className="sidebar-brand">
+        <div className="sidebar-brand" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
             <div className="brand-badge">🚦</div>
             <div>
@@ -61,20 +72,39 @@ export default function Sidebar({
               <span className="brand-sub">Traffic Control Unit</span>
             </div>
           </div>
-          {isOpenMobile && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
             <button
-              onClick={onCloseMobile}
+              onClick={() => themeManager.toggleTheme()}
+              className="btn-ctrl"
               style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--color-text-tertiary)',
-                fontSize: '18px',
-                cursor: 'pointer',
+                width: '32px',
+                height: '32px',
+                padding: 0,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '14px',
               }}
+              title={`Switch Theme (${currentTheme === 'light' ? 'Light' : 'Dark'})`}
             >
-              ✕
+              {currentTheme === 'light' ? '🌙' : '☀️'}
             </button>
-          )}
+            {isOpenMobile && (
+              <button
+                onClick={onCloseMobile}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--color-text-tertiary)',
+                  fontSize: '18px',
+                  cursor: 'pointer',
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Jurisdiction Switcher */}
@@ -92,6 +122,31 @@ export default function Sidebar({
             <option value="nagpur">🏛️ Nagpur (NMC)</option>
             <option value="pune">🏙️ Pune (PMC)</option>
           </select>
+        </div>
+
+        {/* Traffic Data Sandbox Action Launcher */}
+        <div style={{ padding: '0 0.875rem 0.5rem 0.875rem' }}>
+          <button
+            onClick={onOpenSandbox}
+            className="btn btn-primary"
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              padding: '0.5rem 0.75rem',
+              background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.25), rgba(139, 92, 246, 0.25))',
+              border: '1px solid var(--color-accent)',
+              color: 'var(--color-text-primary)',
+            }}
+            title="Launch Interactive Traffic Data Sandbox & Scenario Studio"
+          >
+            <span>🧪</span>
+            <span>Traffic Data Sandbox</span>
+          </button>
         </div>
 
         {/* Navigation Items */}

@@ -3,6 +3,9 @@ import TrafficMap from '../map/TrafficMap';
 import WardDetailDrawer from '../drawers/WardDetailDrawer';
 import RoadSegmentDrawer from '../drawers/RoadSegmentDrawer';
 import RedZoneDetailDrawer from '../drawers/RedZoneDetailDrawer';
+import TrafficConditionEditorDrawer from '../sandbox/TrafficConditionEditorDrawer';
+import SimulationTimelineScrubber from '../sandbox/SimulationTimelineScrubber';
+import { trafficStore, OPERATIONAL_MODES } from '../../services/trafficStore';
 
 export default function MapView({
   selectedCityId,
@@ -17,6 +20,12 @@ export default function MapView({
   onToggleLegend,
   onNavigateTo,
   isActive = true,
+  // Props for sandbox drawing and visual alignments
+  isDrawingSegment = false,
+  onFinishDrawingSegment = null,
+  activeDispatchRoute = null,
+  activeProposalAlignment = null,
+  currentMode = OPERATIONAL_MODES.LIVE,
 }) {
   // Layer Toggles
   const [showZones, setShowZones] = useState(true);
@@ -28,6 +37,7 @@ export default function MapView({
   const [selectedWard, setSelectedWard] = useState(null);
   const [selectedRoad, setSelectedRoad] = useState(null);
   const [selectedRedZone, setSelectedRedZone] = useState(null);
+  const [editingSegment, setEditingSegment] = useState(null);
 
   const redZones = orchestratorOutput?.detection?.redZones || [];
   const policeUnits = orchestratorOutput?.policeDispatch?.recommendations || [];
@@ -35,19 +45,47 @@ export default function MapView({
   const handleSelectWard = (wardData) => {
     setSelectedRoad(null);
     setSelectedRedZone(null);
+    setEditingSegment(null);
     setSelectedWard(wardData);
   };
 
   const handleSelectRoad = (roadData) => {
     setSelectedWard(null);
     setSelectedRedZone(null);
-    setSelectedRoad(roadData);
+    // In Simulation or Hybrid mode, open condition editor directly
+    if (currentMode === OPERATIONAL_MODES.SIMULATION || currentMode === OPERATIONAL_MODES.HYBRID) {
+      setEditingSegment(roadData);
+      setSelectedRoad(null);
+    } else {
+      setSelectedRoad(roadData);
+      setEditingSegment(null);
+    }
   };
 
   const handleSelectRedZone = (rzData) => {
     setSelectedWard(null);
     setSelectedRoad(null);
+    setEditingSegment(null);
     setSelectedRedZone(rzData);
+  };
+
+  const handleSegmentDrawn = (coords) => {
+    if (!coords || coords.length < 2) {
+      if (onFinishDrawingSegment) onFinishDrawingSegment();
+      return;
+    }
+
+    // Create custom segment in trafficStore
+    const newSeg = trafficStore.addCustomDrawnSegment(selectedCityId, {
+      coordinates: coords,
+      corridorName: `Custom Segment ${Date.now().toString().slice(-4)}`,
+      congestionLevel: 'SEVERE',
+      currentSpeedKmH: 12,
+      freeFlowSpeedKmH: 50,
+    });
+
+    if (onFinishDrawingSegment) onFinishDrawingSegment();
+    setEditingSegment(newSeg);
   };
 
   return (
@@ -56,7 +94,7 @@ export default function MapView({
       <TrafficMap
         selectedCityId={selectedCityId}
         trafficData={trafficData}
-        selectedSegment={selectedRoad}
+        selectedSegment={editingSegment || selectedRoad}
         onSelectSegment={handleSelectRoad}
         focusTrigger={focusTrigger}
         focusCoords={focusCoords}
@@ -71,17 +109,30 @@ export default function MapView({
         fitTrigger={fitTrigger}
         resetTrigger={resetTrigger}
         isActive={isActive}
+        isDrawingSegment={isDrawingSegment}
+        onSegmentDrawn={handleSegmentDrawn}
+        activeDispatchRoute={activeDispatchRoute}
+        activeProposalAlignment={activeProposalAlignment}
       />
 
-      {/* 2. Floating Layers & Legend Drawer (Collapsible) */}
+      {/* 2. Floating Simulation Timeline Scrubber (When in Simulation or Hybrid Mode) */}
+      {(currentMode === OPERATIONAL_MODES.SIMULATION || currentMode === OPERATIONAL_MODES.HYBRID) && (
+        <SimulationTimelineScrubber
+          cityId={selectedCityId}
+          onTimeChange={() => {}}
+        />
+      )}
+
+      {/* 3. Floating Layers & Legend Drawer (Collapsible) */}
       {showLegend && (
         <div
           className="hud-panel hud-top-left"
           style={{
             width: '280px',
             padding: '1rem',
-            background: 'rgba(17, 19, 23, 0.95)',
+            background: 'var(--color-surface-0)',
             border: '1px solid var(--color-border)',
+            boxShadow: 'var(--shadow-lg)',
           }}
         >
           <div
@@ -94,7 +145,7 @@ export default function MapView({
               paddingBottom: '0.5rem',
             }}
           >
-            <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#fff' }}>
+            <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
               GIS Layers & Visibility
             </span>
             <button
@@ -233,7 +284,7 @@ export default function MapView({
         </div>
       )}
 
-      {/* 3. Contextual Side Drawers */}
+      {/* 4. Contextual Side Drawers */}
       {selectedWard && (
         <WardDetailDrawer
           ward={selectedWard}
@@ -258,6 +309,22 @@ export default function MapView({
           onClose={() => setSelectedRedZone(null)}
           onDispatchPolice={() => onNavigateTo && onNavigateTo('police_dispatch')}
           onInspectRoute={() => onNavigateTo && onNavigateTo('routing')}
+        />
+      )}
+
+      {/* 5. Live Traffic Condition Editor Drawer (Sandbox Mode) */}
+      {editingSegment && (
+        <TrafficConditionEditorDrawer
+          segment={editingSegment}
+          cityId={selectedCityId}
+          onClose={() => setEditingSegment(null)}
+          onUpdate={(updatedProps) => {
+            setEditingSegment((prev) => ({ ...prev, ...updatedProps }));
+          }}
+          onDelete={() => setEditingSegment(null)}
+          onCreateRedZone={() => {
+            if (onNavigateTo) onNavigateTo('red_zones');
+          }}
         />
       )}
     </div>

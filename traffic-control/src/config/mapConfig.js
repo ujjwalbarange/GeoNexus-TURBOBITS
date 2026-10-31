@@ -29,7 +29,7 @@ export const MAP_PROVIDERS = [
     name: 'MapTiler Streets (Vector)',
     shortName: 'MapTiler Vector',
     icon: '🗺️',
-    url: `https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${import.meta.env.VITE_MAPTILER_API_KEY || 'vfych9w2Nh5AGjIQ7jgL'}`,
+    url: `https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${(typeof import.meta !== 'undefined' && import.meta.env?.VITE_MAPTILER_API_KEY) || 'vfych9w2Nh5AGjIQ7jgL'}`,
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.maptiler.com/" target="_blank" rel="noreferrer">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>',
   },

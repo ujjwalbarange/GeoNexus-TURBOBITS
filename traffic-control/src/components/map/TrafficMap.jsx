@@ -28,6 +28,11 @@ export default function TrafficMap({
   fitTrigger = 0,
   resetTrigger = 0,
   isActive = true,
+  // New Interactive Sandbox & Visual Architecture Capabilities
+  isDrawingSegment = false,
+  onSegmentDrawn = null,
+  activeDispatchRoute = null,
+  activeProposalAlignment = null,
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -40,6 +45,12 @@ export default function TrafficMap({
   const policeLayerGroupRef = useRef(null);
   const drainageLayerGroupRef = useRef(null);
   const redZonesLayerGroupRef = useRef(null);
+  const dispatchRouteLayerGroupRef = useRef(null);
+  const proposalAlignmentLayerGroupRef = useRef(null);
+  const drawingLayerGroupRef = useRef(null);
+
+  // In-progress drawn coordinates
+  const drawnPointsRef = useRef([]);
 
   // 1. Initialize Leaflet Map on Mount
   useEffect(() => {
@@ -105,7 +116,10 @@ export default function TrafficMap({
     wardsLayerGroupRef.current = L.layerGroup().addTo(map);
     drainageLayerGroupRef.current = L.layerGroup().addTo(map);
     policeLayerGroupRef.current = L.layerGroup().addTo(map);
+    proposalAlignmentLayerGroupRef.current = L.layerGroup().addTo(map);
+    dispatchRouteLayerGroupRef.current = L.layerGroup().addTo(map);
     redZonesLayerGroupRef.current = L.layerGroup().addTo(map);
+    drawingLayerGroupRef.current = L.layerGroup().addTo(map);
 
     // Interactive Corridor Vector Layer Manager
     const trafficManager = new TrafficMapLayerManager(map);
@@ -484,17 +498,259 @@ export default function TrafficMap({
     }
   }, [focusTrigger, focusCoords]);
 
+  // 13. Interactive Map Drawing Tool (Draw Traffic Segment)
+  const [pointCount, setPointCount] = React.useState(0);
+
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (!isDrawingSegment) {
+      if (drawingLayerGroupRef.current) drawingLayerGroupRef.current.clearLayers();
+      drawnPointsRef.current = [];
+      setPointCount(0);
+      map.getContainer().style.cursor = '';
+      return;
+    }
+
+    map.getContainer().style.cursor = 'crosshair';
+
+    const handleMapClick = (e) => {
+      const pt = [e.latlng.lat, e.latlng.lng];
+      drawnPointsRef.current.push(pt);
+      setPointCount(drawnPointsRef.current.length);
+
+      // Render marker at waypoint
+      const marker = L.circleMarker(pt, {
+        radius: 6,
+        fillColor: '#8b5cf6',
+        color: '#ffffff',
+        weight: 2,
+        fillOpacity: 1,
+      });
+
+      if (drawingLayerGroupRef.current) {
+        drawingLayerGroupRef.current.addLayer(marker);
+        if (drawnPointsRef.current.length >= 2) {
+          const polyline = L.polyline(drawnPointsRef.current, {
+            color: '#8b5cf6',
+            weight: 5,
+            dashArray: '5, 5',
+            opacity: 0.9,
+          });
+          drawingLayerGroupRef.current.addLayer(polyline);
+        }
+      }
+    };
+
+    map.on('click', handleMapClick);
+
+    return () => {
+      map.off('click', handleMapClick);
+      map.getContainer().style.cursor = '';
+    };
+  }, [isDrawingSegment]);
+
+  // 14. Render Police Dispatch Route & Markers
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !dispatchRouteLayerGroupRef.current) return;
+
+    dispatchRouteLayerGroupRef.current.clearLayers();
+    if (!activeDispatchRoute || !activeDispatchRoute.coordinates || activeDispatchRoute.coordinates.length < 2) return;
+
+    const coords = activeDispatchRoute.coordinates;
+    const startPt = coords[0];
+    const endPt = coords[coords.length - 1];
+
+    // Response route polyline
+    const routeLine = L.polyline(coords, {
+      color: '#0052cc',
+      weight: 6,
+      opacity: 0.9,
+      dashArray: '8, 8',
+    });
+
+    const routeGlow = L.polyline(coords, {
+      color: '#38bdf8',
+      weight: 12,
+      opacity: 0.45,
+    });
+
+    // Start marker: Police Unit
+    const unitIcon = L.divIcon({
+      className: 'dispatch-unit-marker',
+      html: `
+        <div style="width: 32px; height: 32px; border-radius: 8px; background: #0052cc; border: 2px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 4px 12px rgba(0,82,204,0.5);">
+          🚓
+        </div>
+      `,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+    });
+    const startMarker = L.marker(startPt, { icon: unitIcon });
+    startMarker.bindTooltip(`🚓 Unit ${activeDispatchRoute.unitCode || 'TP-01'} (Dispatched)`, { sticky: true });
+
+    // End marker: Target Red Zone
+    const destIcon = L.divIcon({
+      className: 'dispatch-dest-marker',
+      html: `
+        <div style="width: 32px; height: 32px; border-radius: 50%; background: #dc2626; border: 2px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 0 16px #dc2626;">
+          🚨
+        </div>
+      `,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+    });
+    const endMarker = L.marker(endPt, { icon: destIcon });
+    endMarker.bindTooltip(`🚨 Incident Destination: ${activeDispatchRoute.destinationName}`, { sticky: true });
+
+    dispatchRouteLayerGroupRef.current.addLayer(routeGlow);
+    dispatchRouteLayerGroupRef.current.addLayer(routeLine);
+    dispatchRouteLayerGroupRef.current.addLayer(startMarker);
+    dispatchRouteLayerGroupRef.current.addLayer(endMarker);
+
+    // Smoothly fit bounds to encompass the complete dispatch response
+    map.fitBounds(L.latLngBounds(coords), { padding: [60, 60], maxZoom: 15 });
+  }, [activeDispatchRoute]);
+
+  // 15. Render Proposed Infrastructure Alignment & Focus
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !proposalAlignmentLayerGroupRef.current) return;
+
+    proposalAlignmentLayerGroupRef.current.clearLayers();
+    if (!activeProposalAlignment) return;
+
+    const coords = activeProposalAlignment.coordinates;
+    if (!coords || coords.length < 2) return;
+
+    // Glowing footprint
+    const glow = L.polyline(coords, {
+      color: '#f59e0b',
+      weight: 14,
+      opacity: 0.45,
+      lineCap: 'round',
+    });
+
+    // Core engineering alignment
+    const line = L.polyline(coords, {
+      color: '#f59e0b',
+      weight: 6,
+      opacity: 0.95,
+      lineCap: 'round',
+    });
+
+    // Centerline dashed marking
+    const centerline = L.polyline(coords, {
+      color: '#ffffff',
+      weight: 2,
+      dashArray: '5, 8',
+      opacity: 0.9,
+    });
+
+    const midCoord = coords[Math.floor(coords.length / 2)];
+    const badgeIcon = L.divIcon({
+      className: 'infra-badge-marker',
+      html: `
+        <div style="padding: 4px 8px; border-radius: 6px; background: #f59e0b; color: #000; font-weight: 800; font-size: 11px; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); white-space: nowrap; border: 1.5px solid #fff;">
+          🌉 ${activeProposalAlignment.title || 'Proposed Alignment'}
+        </div>
+      `,
+      iconSize: [140, 28],
+      iconAnchor: [70, 14],
+    });
+
+    const badgeMarker = L.marker(midCoord, { icon: badgeIcon });
+
+    proposalAlignmentLayerGroupRef.current.addLayer(glow);
+    proposalAlignmentLayerGroupRef.current.addLayer(line);
+    proposalAlignmentLayerGroupRef.current.addLayer(centerline);
+    proposalAlignmentLayerGroupRef.current.addLayer(badgeMarker);
+
+    // Zoom specifically to proposal area bounds with high precision
+    const bounds = activeProposalAlignment.bounds || L.latLngBounds(coords);
+    map.fitBounds(bounds, { padding: [80, 80], maxZoom: 16 });
+  }, [activeProposalAlignment]);
+
+  const handleFinishDrawing = () => {
+    if (drawnPointsRef.current.length < 2) {
+      alert('Please click at least 2 points on the map to define the road segment.');
+      return;
+    }
+    if (onSegmentDrawn) {
+      onSegmentDrawn([...drawnPointsRef.current]);
+    }
+    drawnPointsRef.current = [];
+    setPointCount(0);
+    if (drawingLayerGroupRef.current) drawingLayerGroupRef.current.clearLayers();
+  };
+
+  const handleCancelDrawing = () => {
+    drawnPointsRef.current = [];
+    setPointCount(0);
+    if (drawingLayerGroupRef.current) drawingLayerGroupRef.current.clearLayers();
+    if (onSegmentDrawn) onSegmentDrawn(null);
+  };
+
   return (
-    <div
-      ref={mapContainerRef}
-      style={{
-        width: '100%',
-        height: '100%',
-        minHeight: '100%',
-        flex: 1,
-        position: 'relative',
-        background: '#0f172a',
-      }}
-    />
+    <div style={{ width: '100%', height: '100%', position: 'relative', flex: 1, minHeight: 0 }}>
+      {/* Floating Drawing Controller Toast */}
+      {isDrawingSegment && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '1rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 35,
+            padding: '0.625rem 1.25rem',
+            background: 'var(--color-surface-0)',
+            border: '2px solid #8b5cf6',
+            borderRadius: 'var(--radius-pill)',
+            boxShadow: 'var(--shadow-xl)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '1rem' }}>✏️</span>
+            <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#8b5cf6' }}>
+              Drawing Segment ({pointCount} points)
+            </span>
+          </div>
+
+          <button
+            onClick={handleFinishDrawing}
+            className="btn btn-primary"
+            style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}
+            disabled={pointCount < 2}
+          >
+            <span>💾 Save & Edit Properties</span>
+          </button>
+
+          <button
+            onClick={handleCancelDrawing}
+            className="btn btn-ghost"
+            style={{ padding: '0.35rem 0.5rem', fontSize: '0.75rem' }}
+          >
+            ✕ Cancel
+          </button>
+        </div>
+      )}
+
+      <div
+        ref={mapContainerRef}
+        style={{
+          width: '100%',
+          height: '100%',
+          minHeight: '100%',
+          flex: 1,
+          position: 'relative',
+          background: '#0f172a',
+        }}
+      />
+    </div>
   );
 }

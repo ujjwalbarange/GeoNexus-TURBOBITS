@@ -23,8 +23,8 @@
  * }
  */
 
-import { TRAFFIC_LEVELS } from '../config/mapConfig';
-import { CITY_CORRIDOR_GEOMETRIES } from './corridorGeometry';
+import { TRAFFIC_LEVELS } from '../config/mapConfig.js';
+import { CITY_CORRIDOR_GEOMETRIES } from './corridorGeometry.js';
 
 /**
  * Determine congestion severity level and color from speed ratio or delay

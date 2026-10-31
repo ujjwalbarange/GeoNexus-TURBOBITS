@@ -22,12 +22,14 @@ export class TrafficCacheManager {
 
     // 2. Check localStorage
     try {
-      const key = `${CACHE_PREFIX}${cityId}`;
-      const raw = localStorage.getItem(key);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        memoryCache.set(cityId, parsed);
-        return parsed;
+      if (typeof localStorage !== 'undefined') {
+        const key = `${CACHE_PREFIX}${cityId}`;
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          memoryCache.set(cityId, parsed);
+          return parsed;
+        }
       }
     } catch (e) {
       console.warn('[TrafficCache] LocalStorage read error:', e);
@@ -51,8 +53,10 @@ export class TrafficCacheManager {
     memoryCache.set(cityId, record);
 
     try {
-      const key = `${CACHE_PREFIX}${cityId}`;
-      localStorage.setItem(key, JSON.stringify(record));
+      if (typeof localStorage !== 'undefined') {
+        const key = `${CACHE_PREFIX}${cityId}`;
+        localStorage.setItem(key, JSON.stringify(record));
+      }
     } catch (e) {
       console.warn('[TrafficCache] LocalStorage write error:', e);
     }

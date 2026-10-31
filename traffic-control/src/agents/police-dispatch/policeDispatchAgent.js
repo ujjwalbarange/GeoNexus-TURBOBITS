@@ -7,7 +7,7 @@
  * - Never executes an unverified dispatch without human operator approval.
  */
 
-import policeResourcesData from '../../../data/police/police_resources.json';
+import { policeStore } from '../../services/policeStore';
 
 export class PoliceDispatchAgent {
   /**
@@ -16,7 +16,7 @@ export class PoliceDispatchAgent {
    * @param {string} cityId 'mumbai' | 'nagpur' | 'pune'
    */
   static evaluateDispatch(redZones = [], cityId) {
-    const cityResources = policeResourcesData.filter((r) => r.cityId === cityId);
+    const cityResources = policeStore.getResourcesForCity(cityId);
     const recommendations = [];
 
     redZones.forEach((rz) => {

@@ -9,7 +9,7 @@
  * - Dynamic key & endpoint updates
  */
 
-import { CITY_CORRIDOR_GEOMETRIES } from './corridorGeometry';
+import { CITY_CORRIDOR_GEOMETRIES } from './corridorGeometry.js';
 
 const TOMTOM_BASE_URL = 'https://api.tomtom.com';
 const DEFAULT_TIMEOUT_MS = 10000;
@@ -40,9 +40,9 @@ export const CITY_PROBE_POINTS = {
 };
 
 export class TrafficApiClient {
-  constructor(apiKey = import.meta.env.VITE_TOMTOM_API_KEY || '') {
+  constructor(apiKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_TOMTOM_API_KEY) || '') {
     this.apiKey = apiKey.trim();
-    this.customEndpoint = (import.meta.env.VITE_TRAFFIC_API_URL || '').trim();
+    this.customEndpoint = ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_TRAFFIC_API_URL) || '').trim();
   }
 
   isConfigured() {

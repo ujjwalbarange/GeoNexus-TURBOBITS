@@ -1,7 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { CITIES } from '../../config/cities';
 import { MAP_PROVIDERS } from '../../config/mapConfig';
 import { formatTimeAgo } from '../../utils/formatters';
+import { themeManager } from '../../services/themeManager';
+import { eventBus, EVENT_TYPES } from '../../services/eventBus';
 
 export default function TopBar({
   selectedCityId,
@@ -23,7 +25,17 @@ export default function TopBar({
   redZones = [],
   policeUnits = [],
   corridors = [],
+  operationalMode = 'LIVE',
+  onOpenSandbox = null,
 }) {
+  const [currentTheme, setCurrentTheme] = useState(themeManager.getTheme());
+
+  useEffect(() => {
+    const unsub = eventBus.subscribe(EVENT_TYPES.THEME_CHANGED, (evt) => {
+      setCurrentTheme(evt?.payload?.theme || themeManager.getTheme());
+    });
+    return unsub;
+  }, []);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -213,6 +225,42 @@ export default function TopBar({
         >
           <span>📊</span>
           <span>Layers</span>
+        </button>
+
+        {/* Operational Mode Badge / Sandbox Launcher */}
+        <button
+          onClick={onOpenSandbox}
+          className="btn-ctrl"
+          style={{
+            borderColor: operationalMode === 'LIVE' ? '#10b981' : operationalMode === 'HYBRID' ? '#8b5cf6' : '#f59e0b',
+            color: operationalMode === 'LIVE' ? '#10b981' : operationalMode === 'HYBRID' ? '#c084fc' : '#f59e0b',
+            fontWeight: 800,
+            fontSize: '0.6875rem',
+            padding: '4px 8px',
+          }}
+          title="Active Traffic Mode. Click to configure Traffic Sandbox."
+        >
+          <span>● {operationalMode}</span>
+        </button>
+
+        {/* Dedicated Sandbox Launcher */}
+        <button
+          onClick={onOpenSandbox}
+          className="btn-ctrl"
+          title="Open Traffic Data Sandbox & Scenario Studio"
+          style={{ background: 'rgba(56, 189, 248, 0.1)', borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
+        >
+          <span>🧪</span>
+          <span>Sandbox</span>
+        </button>
+
+        {/* Theme Switcher Toggle (Light "Civic Horizon" / Dark "Graphite Obsidian") */}
+        <button
+          onClick={() => themeManager.toggleTheme()}
+          className="btn-ctrl"
+          title={`Switch Theme (Currently ${currentTheme === 'light' ? 'Civic Light' : 'Obsidian Dark'})`}
+        >
+          <span>{currentTheme === 'light' ? '🌙' : '☀️'}</span>
         </button>
 
         {/* Strict Explicit Refresh Button */}

@@ -2,82 +2,247 @@
   {
     "id": "prop_mum_01",
     "cityId": "mumbai",
-    "junctionName": "Saki Naka Metro Junction & Andheri-Ghatkopar Link Rd",
-    "corridorCode": "AGLR",
-    "coordinates": [19.1026, 72.8878],
-    "identifiedBottleneck": "Severe 5-arm surface intersection where East-West traffic conflicts with Metro Line 1 pillars and heavy airport feeder traffic.",
-    "currentCongestionRatio": 0.22,
-    "averageDailyDelayMins": 42,
-    "recommendedInfrastructure": {
-      "typeId": "flyover",
-      "name": "Bifurcated Y-Flyover (Andheri-Kurla Rd to Ghatkopar)",
-      "configuration": "Elevated 2+2 lane flyover passing between Metro 1 viaduct portals with slip arm towards Asalpha.",
-      "potentialAdvantages": "Eliminates 65% of surface cross-traffic waiting time; bypasses Saki Naka signal completely.",
-      "potentialDisadvantages": "Tight clearances around existing elevated Metro Line 1 piers; narrow right-of-way during construction.",
-      "landAcquisitionRequired": "Minimal (within existing municipal road reserve; requires clearing encroachments on service lanes).",
-      "preliminaryCostCategory": "₹140 - ₹180 Crore (Estimated Class-C Capital Project)",
-      "engineeringFeasibilityRequirements": "Structural pier clearance study from Mumbai Metro One (MMOPL), utility mapping for 1800mm water main."
-    },
-    "alternativeOption": {
-      "typeId": "rub",
-      "name": "Vehicular Underpass",
-      "reasonRejected": "Extremely high water table and Mithi River backwater flooding vulnerability during monsoons."
-    },
-    "confidenceScore": 0.88,
-    "status": "PROPOSED_FOR_FEASIBILITY"
+    "title": "Kalanagar-BKC Multi-Tier Grade Separator & Elevated Connector",
+    "junctionName": "Western Express Highway & BKC Connector Junction",
+    "corridorCode": "WEH",
+    "coordinates": [19.0600, 72.8480],
+    "alignmentCoordinates": [
+      [19.0520, 72.8420],
+      [19.0560, 72.8450],
+      [19.0600, 72.8480],
+      [19.0640, 72.8520],
+      [19.0670, 72.8560]
+    ],
+    "bounds": [
+      [19.0500, 72.8400],
+      [19.0700, 72.8600]
+    ],
+    "category": "Rotatory Multi-Tier Flyover",
+    "typeId": "flyover",
+    "problemDescription": "Severe weaving conflict between Sea Link northbound exit traffic and BKC commercial ingress, producing 28 mins daily queueing back to Santacruz.",
+    "existingInfrastructure": "6-lane surface arterial with complex 5-phase signalized rotary.",
+    "trafficObservations": "Peak hour volume: 8,400 PCU/hr against 4,800 PCU/hr design capacity (V/C ratio: 1.75).",
+    "proposedInfrastructureType": "Grade-Separated Rotatory Flyover & Directional Ramps",
+    "relatedRoads": ["Western Express Highway (WEH)", "Bandra-Kurla Complex (BKC) Link", "Sion-Bandra Link Rd"],
+    "feasibilityStatus": "FEASIBLE_APPROVED",
+    "feasibilityScore": 92,
+    "estCost": "₹340 Crores",
+    "expectedBenefits": "Eliminates 65% of surface cross-traffic waiting; throughput increases by +52%; saves 22 mins per commuter trip.",
+    "engineeringConsiderations": "Utility diversion of 1800mm Vaitarna water transmission main and coordination with elevated Metro Line 2B pier portals.",
+    "proposalStatus": "DETAILED_PROJECT_REPORT_READY",
+    "architecturalConcept": {
+      "planType": "Bifurcated Prestressed Segmental Box Girder",
+      "deckElevationM": 9.2,
+      "spanLengthM": 45,
+      "totalLengthM": 1850,
+      "beforeThroughput": "4,200 PCU/hr (Grade Gridlock)",
+      "afterThroughput": "7,800 PCU/hr (+85% Gain)",
+      "schematicUrl": "conceptual_flyover_elevation"
+    }
+  },
+  {
+    "id": "prop_mum_02",
+    "cityId": "mumbai",
+    "title": "Sion-Dharavi Mithi River Elevated Waterlogging Bypass",
+    "junctionName": "Sion Circle to Bandra-Kurla Complex Southern Arterial",
+    "corridorCode": "EEH",
+    "coordinates": [19.0400, 72.8600],
+    "alignmentCoordinates": [
+      [19.0340, 72.8550],
+      [19.0370, 72.8580],
+      [19.0400, 72.8600],
+      [19.0440, 72.8640],
+      [19.0480, 72.8680]
+    ],
+    "bounds": [
+      [19.0300, 72.8500],
+      [19.0520, 72.8720]
+    ],
+    "category": "Elevated Arterial Corridor",
+    "typeId": "elevated_corridor",
+    "problemDescription": "King Circle and Sion railway low-lying underpasses flood during monsoon high tides, shutting down arterial connectivity for 4-8 hours.",
+    "existingInfrastructure": "Low-elevation surface roadway depressed below 100-year flood datum line.",
+    "trafficObservations": "Monsoon downpours cause +45 mins delay with complete standstill during high-tide nullah backflow.",
+    "proposedInfrastructureType": "Multi-Kilometer Elevated Viaduct Bypassing Flood Inundation Zones",
+    "relatedRoads": ["Eastern Express Highway (EEH)", "LBS Marg", "Sion-Dharavi Rd"],
+    "feasibilityStatus": "TECHNICAL_APPRAISAL",
+    "feasibilityScore": 86,
+    "estCost": "₹480 Crores",
+    "expectedBenefits": "Guarantees 100% year-round transit during monsoons; throughput increases by +44%.",
+    "engineeringConsiderations": "Deep pile foundations into basalt bedrock; elevated 6.5m above 100-year flood datum line.",
+    "proposalStatus": "ENVIRONMENTAL_CLEARANCE_PENDING",
+    "architecturalConcept": {
+      "planType": "Continuous High-Level Viaduct above Inundation Basin",
+      "deckElevationM": 8.0,
+      "spanLengthM": 38,
+      "totalLengthM": 2400,
+      "beforeThroughput": "0 PCU/hr (Submerged during downpours)",
+      "afterThroughput": "6,200 PCU/hr (Uninterrupted Flow)",
+      "schematicUrl": "conceptual_elevated_viaduct"
+    }
   },
   {
     "id": "prop_ngp_01",
     "cityId": "nagpur",
-    "junctionName": "Sitabuldi Interchange & Variety Square (Amravati-Wardha Rd)",
-    "corridorCode": "SIT_SQ",
-    "coordinates": [21.1465, 79.0830],
-    "identifiedBottleneck": "Heavy confluence of north-south Wardha road traffic with east-west Amravati highway and Nagpur Metro interchange.",
-    "currentCongestionRatio": 0.28,
-    "averageDailyDelayMins": 35,
-    "recommendedInfrastructure": {
-      "typeId": "flyover",
-      "name": "Double-Decker Composite Viaduct Extension",
-      "configuration": "Direct grade-separated vehicular deck integrated with existing Sitabuldi Metro viaduct alignment.",
-      "potentialAdvantages": "Direct signal-free pass from Rahate Colony to Cotton Market without surface choking.",
-      "potentialDisadvantages": "High density heritage market zone limits ramp footprint.",
-      "landAcquisitionRequired": "Partial strip acquisition near Munje Square.",
-      "preliminaryCostCategory": "₹95 - ₹125 Crore",
-      "engineeringFeasibilityRequirements": "Integration analysis with Maha-Metro structural piers, commercial pedestrian circulation study."
-    },
-    "alternativeOption": {
-      "typeId": "pedestrian_overbridge",
-      "name": "Elevated Pedestrian Skywalk Network",
-      "reasonRejected": "Pedestrian bridges help safety but do not resolve the heavy bus and auto-rickshaw vehicular conflict."
-    },
-    "confidenceScore": 0.85,
-    "status": "PROPOSED_FOR_FEASIBILITY"
+    "title": "Nagpur Outer Ring Road & Wardha Road (NH-44) Grade-Separated Rotary",
+    "junctionName": "Wardha Road (NH-44) & Outer Ring Road (ORR) Interchange",
+    "corridorCode": "WRD",
+    "coordinates": [21.0800, 79.0500],
+    "alignmentCoordinates": [
+      [21.0720, 79.0420],
+      [21.0760, 79.0460],
+      [21.0800, 79.0500],
+      [21.0840, 79.0540],
+      [21.0880, 79.0580]
+    ],
+    "bounds": [
+      [21.0700, 79.0400],
+      [21.0900, 79.0600]
+    ],
+    "category": "Grade Separator",
+    "typeId": "grade_separated_interchange",
+    "problemDescription": "Inter-state freight convoys crossing Wardha Road collide with MIHAN tech park and airport commuter traffic at uncontrolled surface rotary.",
+    "existingInfrastructure": "Single-level large un-signalized roundabout with heavy freight weaving.",
+    "trafficObservations": "14,000 PCU/hr with 35% heavy multi-axle vehicle mix causing severe pavement degradation and accidents.",
+    "proposedInfrastructureType": "Four-Leaf Partial Cloverleaf Interchange with Depressed Through-Pass",
+    "relatedRoads": ["Wardha Road (NH-44)", "Outer Ring Road (ORR)", "MIHAN Ingress Corridor"],
+    "feasibilityStatus": "FEASIBLE_APPROVED",
+    "feasibilityScore": 89,
+    "estCost": "₹210 Crores",
+    "expectedBenefits": "Completely isolates freight trucks from urban commuters; reduces peak junction wait time by 48%.",
+    "engineeringConsiderations": "High-mast illumination, grade stabilization of approach ramps, stormwater drainage into nearby minor nullah.",
+    "proposalStatus": "TENDER_NOTIFICATION_ACTIVE",
+    "architecturalConcept": {
+      "planType": "Grade-Separated Cloverleaf Interchange with Slip Ramps",
+      "deckElevationM": 7.5,
+      "spanLengthM": 50,
+      "totalLengthM": 1450,
+      "beforeThroughput": "3,400 PCU/hr (Rotary Bottleneck)",
+      "afterThroughput": "6,800 PCU/hr (+100% Flow Gain)",
+      "schematicUrl": "conceptual_cloverleaf_rotary"
+    }
+  },
+  {
+    "id": "prop_ngp_02",
+    "cityId": "nagpur",
+    "title": "Amravati Road (NH-53) Wadi Freight Underpass & Junction Redesign",
+    "junctionName": "Amravati Road & Wadi Industrial Police Station T-Junction",
+    "corridorCode": "AMR",
+    "coordinates": [21.1550, 79.0200],
+    "alignmentCoordinates": [
+      [21.1500, 79.0140],
+      [21.1530, 79.0170],
+      [21.1550, 79.0200],
+      [21.1580, 79.0240],
+      [21.1610, 79.0280]
+    ],
+    "bounds": [
+      [21.1480, 79.0100],
+      [21.1640, 79.0300]
+    ],
+    "category": "Road Underpass",
+    "typeId": "rub",
+    "problemDescription": "Continuous freight queues heading to Wadi logistics parks choke suburban school and hospital access lanes.",
+    "existingInfrastructure": "4-lane congested highway with frequent commercial loading friction.",
+    "trafficObservations": "Average transit speed drops to 14 km/h during morning industrial shift change.",
+    "proposedInfrastructureType": "Reinforced Concrete Box Culvert Vehicular Underpass",
+    "relatedRoads": ["Amravati Road (NH-53)", "Wadi MIDC Link Rd", "Hingna Connector"],
+    "feasibilityStatus": "FEASIBLE_APPROVED",
+    "feasibilityScore": 91,
+    "estCost": "₹165 Crores",
+    "expectedBenefits": "Diverts through-highway traffic beneath surface grade; eliminates 22 mins daily transit delay.",
+    "engineeringConsiderations": "Underground telecommunication fiber relocation and high-capacity submersible pump well installation.",
+    "proposalStatus": "PWD_TECHNICAL_SANCTION_GRANTED",
+    "architecturalConcept": {
+      "planType": "Dual Reinforced Box Culvert Underpass with Retaining Walls",
+      "deckElevationM": -5.8,
+      "spanLengthM": 32,
+      "totalLengthM": 920,
+      "beforeThroughput": "2,900 PCU/hr (Surface Delay)",
+      "afterThroughput": "5,600 PCU/hr (+93% Gain)",
+      "schematicUrl": "conceptual_underpass_box"
+    }
   },
   {
     "id": "prop_pun_01",
     "cityId": "pune",
-    "junctionName": "Hinjawadi Phase 1 Shivaji Chowk & Wakad Bridge Junction",
-    "corridorCode": "HIN_SHIV",
+    "title": "Hinjawadi IT Corridor Shivaji Chowk Double-Decker Metro-Flyover",
+    "junctionName": "Shivaji Chowk Phase 1 to Phase 3 Tech Park Connector",
+    "corridorCode": "HIN",
     "coordinates": [18.5940, 73.7420],
-    "identifiedBottleneck": "Critical single-point ingress bottleneck where over 120,000 IT tech commuters bottleneck into Hinjawadi Rajiv Gandhi Infotech Park.",
-    "currentCongestionRatio": 0.18,
-    "averageDailyDelayMins": 58,
-    "recommendedInfrastructure": {
-      "typeId": "grade_separated_interchange",
-      "name": "Multi-Tier Grade Separator & Dedicated IT Corridor Flyover",
-      "configuration": "Continuous 4-lane elevated corridor from Bhumkar Chowk / Wakad over Shivaji Chowk terminating past Phase 1 circle.",
-      "potentialAdvantages": "Direct bypass for Phase 2/3 commuters without encountering Phase 1 local junction signals; eliminates 45 mins queueing.",
-      "potentialDisadvantages": "Requires synchronized construction alongside Pune Metro Line 3 elevated piers.",
-      "landAcquisitionRequired": "MIDC and PMRDA road reserve already acquired; minimal private land impact.",
-      "preliminaryCostCategory": "₹210 - ₹260 Crore",
-      "engineeringFeasibilityRequirements": "Joint geotechnical foundation verification with Pune Metro Line 3 concessionaire (TRIL Urban / Siemens)."
-    },
-    "alternativeOption": {
-      "typeId": "rub",
-      "name": "Underpass under Shivaji Chowk",
-      "reasonRejected": "Underground utilities and storm drainage discharge into Mula River obstructed by rocky basalt substrata."
-    },
-    "confidenceScore": 0.92,
-    "status": "PROPOSED_FOR_FEASIBILITY"
+    "alignmentCoordinates": [
+      [18.5880, 73.7340],
+      [18.5910, 73.7380],
+      [18.5940, 73.7420],
+      [18.5980, 73.7470],
+      [18.6020, 73.7520]
+    ],
+    "bounds": [
+      [18.5850, 73.7300],
+      [18.6050, 73.7550]
+    ],
+    "category": "Double-Decker Metro-Flyover",
+    "typeId": "flyover",
+    "problemDescription": "Single ingress artery into Rajiv Gandhi Infotech Park causes 45-60 minute gridlock for 140,000 tech employees during shift changes.",
+    "existingInfrastructure": "4-lane surface road severely constrained by commercial shopfront encroachments.",
+    "trafficObservations": "Evening exit queue tailbacks reach 5.5 km back onto NH-48 bypass.",
+    "proposedInfrastructureType": "Integrated Double-Decker Flyover with Metro Line 3 Viaduct",
+    "relatedRoads": ["Hinjawadi Main Rd", "Wakad Bridge Connector", "Marunji Rd"],
+    "feasibilityStatus": "FEASIBLE_APPROVED",
+    "feasibilityScore": 94,
+    "estCost": "₹620 Crores",
+    "expectedBenefits": "Combines elevated rapid rail with 4-lane grade-separated vehicular deck; throughput increases by +64%.",
+    "engineeringConsiderations": "Coordinated launching with Pune Metro Line 3 concessionaire; integrated portal piers supporting rail deck at +15.5m and highway deck at +8.5m.",
+    "proposalStatus": "PMRDA_ACTIVE_EXECUTION_PIPELINE",
+    "architecturalConcept": {
+      "planType": "Composite Steel-Concrete Double-Decker Rail & Road Viaduct",
+      "deckElevationM": 15.5,
+      "spanLengthM": 42,
+      "totalLengthM": 3200,
+      "beforeThroughput": "3,100 PCU/hr (Shift-Change Choke)",
+      "afterThroughput": "7,500 PCU/hr (+141% Gain)",
+      "schematicUrl": "conceptual_double_decker"
+    }
+  },
+  {
+    "id": "prop_pun_02",
+    "cityId": "pune",
+    "title": "Pune University Circle Multi-Tier Grade Separation Flyover",
+    "junctionName": "Senapati Bapat Rd, Ganeshkhind Rd & Aundh Rd Convergence",
+    "corridorCode": "SBR",
+    "coordinates": [18.5360, 73.8320],
+    "alignmentCoordinates": [
+      [18.5300, 73.8260],
+      [18.5330, 73.8290],
+      [18.5360, 73.8320],
+      [18.5390, 73.8360],
+      [18.5420, 73.8400]
+    ],
+    "bounds": [
+      [18.5280, 73.8240],
+      [18.5450, 73.8420]
+    ],
+    "category": "Rotatory Multi-Tier Flyover",
+    "typeId": "flyover",
+    "problemDescription": "Six-arm convergence chokes traffic from Baner, Aundh, Pashan, and SB Road with average signal cycle delays exceeding 180 seconds.",
+    "existingInfrastructure": "Surface rotary operating past saturation limit.",
+    "trafficObservations": "11,500 PCU/hr with recurring spillover onto Ganeshkhind arterial.",
+    "proposedInfrastructureType": "Two-Tier Elevated Flyover Integrated with Hinjawadi-Shivajinagar Metro Deck",
+    "relatedRoads": ["Ganeshkhind Rd", "Senapati Bapat Rd", "Aundh Rd", "Pashan Rd"],
+    "feasibilityStatus": "FEASIBLE_APPROVED",
+    "feasibilityScore": 95,
+    "estCost": "₹410 Crores",
+    "expectedBenefits": "Uninterrupted pass-through between Shivajinagar and Aundh/Baner; reduces intersection delay by 58%.",
+    "engineeringConsiderations": "Deep foundation piling in basalt; night-time precast girder launching during off-peak hours.",
+    "proposalStatus": "ACTIVE_CONSTRUCTION",
+    "architecturalConcept": {
+      "planType": "Multi-Level Integrated Directional Flyover Network",
+      "deckElevationM": 12.0,
+      "spanLengthM": 40,
+      "totalLengthM": 2100,
+      "beforeThroughput": "4,500 PCU/hr (Rotary Choke)",
+      "afterThroughput": "8,200 PCU/hr (+82% Gain)",
+      "schematicUrl": "conceptual_university_rotary"
+    }
   }
 ]
